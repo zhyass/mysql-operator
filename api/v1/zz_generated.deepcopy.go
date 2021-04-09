@@ -200,8 +200,8 @@ func (in *PodSpec) DeepCopyInto(out *PodSpec) {
 		*out = new(corev1.Affinity)
 		(*in).DeepCopyInto(*out)
 	}
-	if in.MysqlLifecycle != nil {
-		in, out := &in.MysqlLifecycle, &out.MysqlLifecycle
+	if in.XenonLifecycle != nil {
+		in, out := &in.XenonLifecycle, &out.XenonLifecycle
 		*out = new(corev1.Lifecycle)
 		(*in).DeepCopyInto(*out)
 	}

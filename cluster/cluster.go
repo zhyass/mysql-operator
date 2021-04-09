@@ -19,8 +19,15 @@ package cluster
 import (
 	"fmt"
 
+	"github.com/blang/semver"
 	mysqlv1 "github.com/zhyass/mysql-operator/api/v1"
+	"github.com/zhyass/mysql-operator/util"
+	"k8s.io/apimachinery/pkg/labels"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
+
+// log is for logging in this package.
+var log = logf.Log.WithName("update-status")
 
 type Cluster struct {
 	*mysqlv1.Cluster
@@ -35,6 +42,33 @@ func New(m *mysqlv1.Cluster) *Cluster {
 // Unwrap returns the api mysqlcluster object
 func (c *Cluster) Unwrap() *mysqlv1.Cluster {
 	return c.Cluster
+}
+
+// GetLabels returns cluster labels
+func (c *Cluster) GetLabels() labels.Set {
+	instance := c.Name
+	if inst, ok := c.Annotations["app.kubernetes.io/instance"]; ok {
+		instance = inst
+	}
+
+	component := "database"
+	if comp, ok := c.Annotations["app.kubernetes.io/component"]; ok {
+		component = comp
+	}
+
+	labels := labels.Set{
+		"app.kubernetes.io/name":       "mysql",
+		"app.kubernetes.io/instance":   instance,
+		"app.kubernetes.io/version":    c.GetMySQLSemVer().String(),
+		"app.kubernetes.io/component":  component,
+		"app.kubernetes.io/managed-by": "mysql.radondb.io",
+	}
+
+	if part, ok := c.Annotations["app.kubernetes.io/part-of"]; ok {
+		labels["app.kubernetes.io/part-of"] = part
+	}
+
+	return labels
 }
 
 // ResourceName is the type for aliasing resources that will be created.
@@ -78,4 +112,21 @@ func GetNameForResource(name ResourceName, clusterName string) string {
 	default:
 		return fmt.Sprintf("%s-mysql", clusterName)
 	}
+}
+
+// GetMySQLSemVer returns the MySQL server version in semver format, or the default one
+func (c *Cluster) GetMySQLSemVer() semver.Version {
+	version := c.Spec.MysqlVersion
+	// lookup for an alias, usually this will solve 5.7 to 5.7.x
+	if v, ok := util.MySQLTagsToSemVer[version]; ok {
+		version = v
+	}
+
+	sv, err := semver.Make(version)
+	if err != nil {
+		log.Error(err, "failed to parse given MySQL version", "input", version)
+	}
+
+	// if there is an error will return 0.0.0
+	return sv
 }
