@@ -18,13 +18,17 @@ package controllers
 
 import (
 	"context"
+	"reflect"
 
 	"github.com/go-logr/logr"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	mysqlv1 "github.com/zhyass/mysql-operator/api/v1"
+	"github.com/zhyass/mysql-operator/cluster"
 )
 
 // ClusterReconciler reconciles a Cluster object
@@ -34,9 +38,12 @@ type ClusterReconciler struct {
 	Scheme *runtime.Scheme
 }
 
+// +kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=mysql.radondb.io,resources=clusters,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=mysql.radondb.io,resources=clusters/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=mysql.radondb.io,resources=clusters/finalizers,verbs=update
+// +kubebuilder:rbac:groups=core,resources=configmaps;secrets;services;events;jobs;pods;persistentvolumeclaims,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -48,9 +55,31 @@ type ClusterReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.7.2/pkg/reconcile
 func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = r.Log.WithValues("cluster", req.NamespacedName)
+	log := r.Log.WithValues("cluster", req.NamespacedName)
 
 	// your logic here
+	instance := cluster.New(&mysqlv1.Cluster{})
+
+	err := r.Get(ctx, req.NamespacedName, instance.Unwrap())
+	if err != nil {
+		if errors.IsNotFound(err) {
+			// Object not found, return.  Created objects are automatically garbage collected.
+			// For additional cleanup logic use finalizers.
+			log.Info("instance not found, maybe removed")
+			return reconcile.Result{}, nil
+		}
+		return reconcile.Result{}, err
+	}
+
+	status := *instance.Status.DeepCopy()
+	defer func() {
+		if !reflect.DeepEqual(status, instance.Status) {
+			sErr := r.Status().Update(ctx, instance.Unwrap())
+			if sErr != nil {
+				log.Error(sErr, "failed to update cluster status")
+			}
+		}
+	}()
 
 	return ctrl.Result{}, nil
 }
