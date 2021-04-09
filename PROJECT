@@ -5,4 +5,14 @@ plugins:
   scorecard.sdk.operatorframework.io/v2: {}
 projectName: mysql-operator
 repo: github.com/zhyass/mysql-operator
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: radondb.io
+  group: mysql
+  kind: Cluster
+  path: github.com/zhyass/mysql-operator/api/v1
+  version: v1
 version: "3"
