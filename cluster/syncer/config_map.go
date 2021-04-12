@@ -52,10 +52,10 @@ func NewConfigMapSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface 
 		}
 
 		cm.Data = map[string]string{
-			"node.cnf": data,
+			"node.cnf":   data,
+			"xenon.json": buildXenonConf(c),
 		}
 
-		// TODO: xenon.json
 		return nil
 	})
 }
@@ -113,4 +113,62 @@ func writeConfigs(cfg *ini.File) (string, error) {
 		return "", err
 	}
 	return buf.String(), nil
+}
+
+func buildXenonConf(c *cluster.Cluster) string {
+	admitDefeatHearbeatCount := *c.Spec.XenonConf.AdmitDefeatHearbeatCount
+	electionTimeout := *c.Spec.XenonConf.ElectionTimeout
+	pingTimeout := electionTimeout / admitDefeatHearbeatCount
+	heartbeatTimeout := electionTimeout / admitDefeatHearbeatCount
+	requestTimeout := electionTimeout / admitDefeatHearbeatCount
+
+	host := c.GetOwnHostName()
+
+	version := "mysql80"
+	sv := c.GetMySQLSemVer()
+	if sv.Major == 5 {
+		if sv.Minor == 6 {
+			version = "mysql56"
+		} else {
+			version = "mysql57"
+		}
+	}
+
+	return fmt.Sprintf(`{
+	"log": {
+		"level": "INFO"
+	},
+	"server": {
+		"endpoint": "%s:8801"
+	},
+	"replication": {
+		"passwd": "@@REPL_PASSWD@@",
+		"user": "@@REPL_USER@@"
+	},
+	"rpc": {
+		"request-timeout": %d
+	},
+	"mysql": {
+		"admit-defeat-ping-count": 3,
+		"admin": "root",
+		"ping-timeout": %d,
+		"passwd": "@@ROOT_PASSWD@@",
+		"host": "localhost",
+		"version": "%s",
+		"master-sysvars": "tokudb_fsync_log_period=default;sync_binlog=default;innodb_flush_log_at_trx_commit=default",
+		"slave-sysvars": "tokudb_fsync_log_period=1000;sync_binlog=1000;innodb_flush_log_at_trx_commit=1",
+		"port": 3306,
+		"monitor-disabled": true
+	},
+	"raft": {
+		"election-timeout": %d,
+		"admit-defeat-hearbeat-count": %d,
+		"heartbeat-timeout": %d,
+		"meta-datadir": "/var/lib/xenon/",
+		"semi-sync-degrade": true,
+		"purge-binlog-disabled": true,
+		"super-idle": false
+	}
+}
+`, host, requestTimeout, pingTimeout, version, electionTimeout, admitDefeatHearbeatCount, heartbeatTimeout)
 }

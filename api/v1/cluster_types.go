@@ -59,6 +59,10 @@ type ClusterSpec struct {
 	// +optional
 	MysqlConf MysqlConf `json:"mysqlConf,omitempty"`
 
+	// Xenon configs.
+	// +optional
+	XenonConf XenonConf `json:"xenonConf,omitempty"`
+
 	// Pod extra specification
 	// +optional
 	PodSpec PodSpec `json:"podSpec,omitempty"`
@@ -71,6 +75,16 @@ type ClusterSpec struct {
 // MysqlConf defines type for extra cluster configs. It's a simple map between
 // string and string.
 type MysqlConf map[string]intstr.IntOrString
+
+// XenonConf defines type for xenon configs.
+type XenonConf struct {
+	// High available component admit defeat heartbeat count.
+	// +optional
+	AdmitDefeatHearbeatCount *int32 `json:"admit-defeat-hearbeat-count,omitempty"`
+	// High available component election timeout. The unit is millisecond.
+	// +optional
+	ElectionTimeout *int32 `json:"election-timeout,omitempty"`
+}
 
 // PodSpec defines type for configure cluster pod spec.
 type PodSpec struct {

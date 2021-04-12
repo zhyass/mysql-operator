@@ -130,3 +130,15 @@ func (c *Cluster) GetMySQLSemVer() semver.Version {
 	// if there is an error will return 0.0.0
 	return sv
 }
+
+func (c *Cluster) GetPodHostName(p int) string {
+	return fmt.Sprintf("%s-%d.%s.%s", c.GetNameForResource(StatefulSet), p,
+		c.GetNameForResource(HeadlessSVC),
+		c.Namespace)
+}
+
+func (c *Cluster) GetOwnHostName() string {
+	return fmt.Sprintf("%s.%s.%s", c.ObjectMeta.Name,
+		c.GetNameForResource(HeadlessSVC),
+		c.Namespace)
+}

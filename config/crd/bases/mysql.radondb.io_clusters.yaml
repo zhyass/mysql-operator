@@ -4912,6 +4912,19 @@ spec:
                         type: string
                     type: object
                 type: object
+              xenonConf:
+                description: Xenon configs.
+                properties:
+                  admit-defeat-hearbeat-count:
+                    description: High available component admit defeat heartbeat count.
+                    format: int32
+                    type: integer
+                  election-timeout:
+                    description: High available component election timeout. The unit
+                      is millisecond.
+                    format: int32
+                    type: integer
+                type: object
             required:
             - secretName
             type: object
