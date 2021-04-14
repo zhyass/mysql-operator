@@ -64,8 +64,8 @@ func buildMysqlConf(c *cluster.Cluster) (string, error) {
 	cfg := ini.Empty()
 	sec := cfg.Section("mysqld")
 
-	addKVConfigsToSection(sec, convertMapToKVConfig(mysqlCommonConfigs), c.Spec.MysqlConf)
-	addKVConfigsToSection(sec, convertMapToKVConfig(mysqlStaticConfigs), c.Spec.MysqlConf)
+	addKVConfigsToSection(sec, convertMapToKVConfig(mysqlCommonConfigs), c.Spec.MysqlOpts.MysqlConf)
+	addKVConfigsToSection(sec, convertMapToKVConfig(mysqlStaticConfigs), c.Spec.MysqlOpts.MysqlConf)
 
 	data, err := writeConfigs(cfg)
 	if err != nil {
@@ -116,8 +116,8 @@ func writeConfigs(cfg *ini.File) (string, error) {
 }
 
 func buildXenonConf(c *cluster.Cluster) string {
-	admitDefeatHearbeatCount := *c.Spec.XenonConf.AdmitDefeatHearbeatCount
-	electionTimeout := *c.Spec.XenonConf.ElectionTimeout
+	admitDefeatHearbeatCount := *c.Spec.XenonOpts.AdmitDefeatHearbeatCount
+	electionTimeout := *c.Spec.XenonOpts.ElectionTimeout
 	pingTimeout := electionTimeout / admitDefeatHearbeatCount
 	heartbeatTimeout := electionTimeout / admitDefeatHearbeatCount
 	requestTimeout := electionTimeout / admitDefeatHearbeatCount

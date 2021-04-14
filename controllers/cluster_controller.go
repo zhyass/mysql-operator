@@ -90,6 +90,11 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return reconcile.Result{}, err
 	}
 
+	secretSyncer := clustersyncer.NewSecretSyncer(r.Client, instance)
+	if err = syncer.Sync(ctx, secretSyncer, r.Recorder); err != nil {
+		return reconcile.Result{}, err
+	}
+
 	return ctrl.Result{}, nil
 }
 

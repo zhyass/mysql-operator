@@ -17,11 +17,16 @@ limitations under the License.
 package syncer
 
 import (
+	"github.com/presslabs/controller-util/rand"
 	"github.com/presslabs/controller-util/syncer"
 	"github.com/zhyass/mysql-operator/cluster"
 	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+)
+
+const (
+	rStrLen = 12
 )
 
 func NewSecretSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface {
@@ -37,6 +42,38 @@ func NewSecretSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface {
 	}
 
 	return syncer.NewObjectSyncer("Secret", c.Unwrap(), secret, cli, func() error {
+		if secret.Data == nil {
+			secret.Data = make(map[string][]byte)
+		}
+
+		secret.Data["MONITOR_USER"] = []byte("qc_monitor")
+		if err := addRandomPassword(secret.Data, "MONITOR_PASSWORD"); err != nil {
+			return err
+		}
+
+		secret.Data["REPLICATION_USER"] = []byte("qc_repl")
+		if err := addRandomPassword(secret.Data, "REPLICATION_PASSWORD"); err != nil {
+			return err
+		}
+
+		secret.Data["ROOT_PASSWORD"] = []byte(c.Spec.MysqlOpts.RootPassword)
+
+		secret.Data["USER"] = []byte(c.Spec.MysqlOpts.User)
+		secret.Data["PASSWORD"] = []byte(c.Spec.MysqlOpts.Password)
+		secret.Data["DATABASE"] = []byte(c.Spec.MysqlOpts.Database)
 		return nil
 	})
+}
+
+// addRandomPassword checks if a key exists and if not registers a random string for that key
+func addRandomPassword(data map[string][]byte, key string) error {
+	if len(data[key]) == 0 {
+		// NOTE: use only alpha-numeric string, this strings are used unescaped in MySQL queries (issue #314)
+		random, err := rand.AlphaNumericString(rStrLen)
+		if err != nil {
+			return err
+		}
+		data[key] = []byte(random)
+	}
+	return nil
 }

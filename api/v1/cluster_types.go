@@ -35,13 +35,13 @@ type ClusterSpec struct {
 	// +optional
 	Replicas *int32 `json:"replicas,omitempty"`
 
-	// The secret name that contains connection information to initialize database, like
-	// USER, PASSWORD, REPLICATION_PASSWORD and so on
-	// This secret will be updated with DB_CONNECT_URL and some more configs.
-	// Can be specified partially
-	// +kubebuilder:validation:MinLength=1
-	// +kubebuilder:validation:MaxLength=63
-	SecretName string `json:"secretName"`
+	// MysqlOpts is the options of MySQL container.
+	// +optional
+	MysqlOpts MysqlOpts `json:"mysqlOpts,omitempty"`
+
+	// XenonOpts is the options of xenon container.
+	// +optional
+	XenonOpts XenonOpts `json:"xenonOpts,omitempty"`
 
 	// Represents the MySQL version that will be run. The available version can be found here:
 	// This field should be set even if the Image is set to let the operator know which mysql version is running.
@@ -49,19 +49,6 @@ type ClusterSpec struct {
 	// Defaults to 5.7
 	// +optional
 	MysqlVersion string `json:"mysqlVersion,omitempty"`
-
-	// To specify the image that will be used for mysql server container.
-	// If this is specified then the mysqlVersion is used as source for MySQL server version.
-	// +optional
-	Image string `json:"image,omitempty"`
-
-	// A map[string]string that will be passed to my.cnf file.
-	// +optional
-	MysqlConf MysqlConf `json:"mysqlConf,omitempty"`
-
-	// Xenon configs.
-	// +optional
-	XenonConf XenonConf `json:"xenonConf,omitempty"`
 
 	// Pod extra specification
 	// +optional
@@ -72,19 +59,59 @@ type ClusterSpec struct {
 	VolumeSpec VolumeSpec `json:"volumeSpec,omitempty"`
 }
 
+// MysqlOpts defines the options of MySQL container.
+type MysqlOpts struct {
+	// To specify the image that will be used for mysql server container.
+	// If this is specified then the mysqlVersion is used as source for MySQL server version.
+	// +optional
+	Image string `json:"image,omitempty"`
+
+	// Password for the root user.
+	// +optional
+	RootPassword string `json:"rootPassword,omitempty"`
+
+	// Username of new user to create.
+	// Defaults to qc_usr
+	// +optional
+	User string `json:"user,omitempty"`
+
+	// Password for the new user.
+	// Defaults to Qing@123
+	// +optional
+	Password string `json:"password,omitempty"`
+
+	// Name for new database to create.
+	// Defaults to qingcloud
+	// +optional
+	Database string `json:"database,omitempty"`
+
+	// Install tokudb engine.
+	// +optional
+	InitTokudb bool `json:"initTokudb,omitempty"`
+
+	// A map[string]string that will be passed to my.cnf file.
+	// +optional
+	MysqlConf MysqlConf `json:"mysqlConf,omitempty"`
+}
+
+// XenonOpts defines the options of xenon container.
+type XenonOpts struct {
+	// To specify the image that will be used for xenon container.
+	// +optional
+	Image string `json:"image,omitempty"`
+
+	// High available component admit defeat heartbeat count.
+	// +optional
+	AdmitDefeatHearbeatCount *int32 `json:"admitDefeatHearbeatCount,omitempty"`
+
+	// High available component election timeout. The unit is millisecond.
+	// +optional
+	ElectionTimeout *int32 `json:"electionTimeout,omitempty"`
+}
+
 // MysqlConf defines type for extra cluster configs. It's a simple map between
 // string and string.
 type MysqlConf map[string]intstr.IntOrString
-
-// XenonConf defines type for xenon configs.
-type XenonConf struct {
-	// High available component admit defeat heartbeat count.
-	// +optional
-	AdmitDefeatHearbeatCount *int32 `json:"admit-defeat-hearbeat-count,omitempty"`
-	// High available component election timeout. The unit is millisecond.
-	// +optional
-	ElectionTimeout *int32 `json:"election-timeout,omitempty"`
-}
 
 // PodSpec defines type for configure cluster pod spec.
 type PodSpec struct {

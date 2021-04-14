@@ -50,18 +50,38 @@ spec:
           spec:
             description: ClusterSpec defines the desired state of Cluster
             properties:
-              image:
-                description: To specify the image that will be used for mysql server
-                  container. If this is specified then the mysqlVersion is used as
-                  source for MySQL server version.
-                type: string
-              mysqlConf:
-                additionalProperties:
-                  anyOf:
-                  - type: integer
-                  - type: string
-                  x-kubernetes-int-or-string: true
-                description: A map[string]string that will be passed to my.cnf file.
+              mysqlOpts:
+                description: MysqlOpts is the options of MySQL container.
+                properties:
+                  database:
+                    description: Name for new database to create. Defaults to qingcloud
+                    type: string
+                  image:
+                    description: To specify the image that will be used for mysql
+                      server container. If this is specified then the mysqlVersion
+                      is used as source for MySQL server version.
+                    type: string
+                  initTokudb:
+                    description: Install tokudb engine.
+                    type: boolean
+                  mysqlConf:
+                    additionalProperties:
+                      anyOf:
+                      - type: integer
+                      - type: string
+                      x-kubernetes-int-or-string: true
+                    description: A map[string]string that will be passed to my.cnf
+                      file.
+                    type: object
+                  password:
+                    description: Password for the new user. Defaults to Qing@123
+                    type: string
+                  rootPassword:
+                    description: Password for the root user.
+                    type: string
+                  user:
+                    description: Username of new user to create. Defaults to qc_usr
+                    type: string
                 type: object
               mysqlVersion:
                 description: 'Represents the MySQL version that will be run. The available
@@ -4734,14 +4754,6 @@ spec:
                 description: Replicas is the number of pods. Defaults to 3
                 format: int32
                 type: integer
-              secretName:
-                description: The secret name that contains connection information
-                  to initialize database, like USER, PASSWORD, REPLICATION_PASSWORD
-                  and so on This secret will be updated with DB_CONNECT_URL and some
-                  more configs. Can be specified partially
-                maxLength: 63
-                minLength: 1
-                type: string
               volumeSpec:
                 description: PVC extra specifiaction
                 properties:
@@ -4912,21 +4924,23 @@ spec:
                         type: string
                     type: object
                 type: object
-              xenonConf:
-                description: Xenon configs.
+              xenonOpts:
+                description: XenonOpts is the options of xenon container.
                 properties:
-                  admit-defeat-hearbeat-count:
+                  admitDefeatHearbeatCount:
                     description: High available component admit defeat heartbeat count.
                     format: int32
                     type: integer
-                  election-timeout:
+                  electionTimeout:
                     description: High available component election timeout. The unit
                       is millisecond.
                     format: int32
                     type: integer
+                  image:
+                    description: To specify the image that will be used for xenon
+                      container.
+                    type: string
                 type: object
-            required:
-            - secretName
             type: object
           status:
             description: ClusterStatus defines the observed state of Cluster
