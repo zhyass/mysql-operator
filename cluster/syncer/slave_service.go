@@ -15,3 +15,43 @@ limitations under the License.
 */
 
 package syncer
+
+import (
+	"github.com/presslabs/controller-util/syncer"
+	core "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/zhyass/mysql-operator/cluster"
+	"github.com/zhyass/mysql-operator/utils"
+)
+
+// NewSlaveSVCSyncer returns a slave service syncer.
+func NewSlaveSVCSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface {
+	service := &core.Service{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Service",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      c.GetNameForResource(cluster.SlaveService),
+			Namespace: c.Namespace,
+			Labels:    c.GetLabels(),
+		},
+	}
+	return syncer.NewObjectSyncer("SlaveSVC", c.Unwrap(), service, cli, func() error {
+		service.Spec.Selector = c.GetSelectorLabels()
+		service.Spec.Selector["role"] = "follower"
+		service.Spec.Selector["healthy"] = "yes"
+
+		if len(service.Spec.Ports) != 1 {
+			service.Spec.Ports = make([]core.ServicePort, 1)
+		}
+
+		service.Spec.Ports[0].Name = utils.MysqlPortName
+		service.Spec.Ports[0].Port = utils.MysqlPort
+		service.Spec.Ports[0].TargetPort = intstr.FromInt(utils.MysqlPort)
+		return nil
+	})
+}

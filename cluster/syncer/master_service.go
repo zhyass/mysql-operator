@@ -40,7 +40,7 @@ func NewMasterSVCSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface 
 			Labels:    c.GetLabels(),
 		},
 	}
-	return syncer.NewObjectSyncer("MasterSVC", nil, service, cli, func() error {
+	return syncer.NewObjectSyncer("MasterSVC", c.Unwrap(), service, cli, func() error {
 		service.Spec.Selector = c.GetSelectorLabels()
 		service.Spec.Selector["role"] = "leader"
 

@@ -94,8 +94,8 @@ const (
 	ConfigMap ResourceName = "config-files"
 	// MasterService is the name of the service that points to master node
 	MasterService ResourceName = "master-service"
-	// HealthyReplicasService is the name of a service that points healthy replicas (excludes master)
-	HealthyReplicasService ResourceName = "healthy-replicas-service"
+	// SlaveService is the name of a service that points healthy slaves (excludes master)
+	SlaveService ResourceName = "slave-service"
 	// HealthyNodesService is the name of a service that contains all healthy nodes
 	HealthyNodesService ResourceName = "healthy-nodes-service"
 	// Secret is the name of the "private" secret that contains operator related credentials
@@ -114,8 +114,8 @@ func GetNameForResource(name ResourceName, clusterName string) string {
 		return fmt.Sprintf("%s-mysql", clusterName)
 	case MasterService:
 		return fmt.Sprintf("%s-master", clusterName)
-	case HealthyReplicasService:
-		return fmt.Sprintf("%s-replicas", clusterName)
+	case SlaveService:
+		return fmt.Sprintf("%s-slave", clusterName)
 	case HeadlessSVC:
 		return fmt.Sprintf("%s-headless", clusterName)
 	case Secret:
