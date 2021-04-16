@@ -20,49 +20,38 @@ import (
 	"github.com/presslabs/controller-util/syncer"
 	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/zhyass/mysql-operator/cluster"
 	"github.com/zhyass/mysql-operator/utils"
 )
 
-// NewHeadlessSVCSyncer returns a service syncer.
-func NewHeadlessSVCSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface {
+// NewHealthySVCSyncer returns a service syncer.
+func NewHealthySVCSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface {
 	service := &core.Service{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
 			Kind:       "Service",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      c.GetNameForResource(cluster.HeadlessSVC),
+			Name:      c.GetNameForResource(cluster.HealthyNodesService),
 			Namespace: c.Namespace,
-			Labels: map[string]string{
-				"app.kubernetes.io/name":       "mysql",
-				"app.kubernetes.io/managed-by": "mysql.radondb.io",
-			},
+			Labels:    c.GetLabels(),
 		},
 	}
-
-	return syncer.NewObjectSyncer("HeadlessSVC", nil, service, cli, func() error {
+	return syncer.NewObjectSyncer("HealthySVC", c.Unwrap(), service, cli, func() error {
 		service.Spec.Type = "ClusterIP"
-		service.Spec.ClusterIP = "None"
-		service.Spec.Selector = labels.Set{
-			"app.kubernetes.io/name":       "mysql",
-			"app.kubernetes.io/managed-by": "mysql.radondb.io",
-		}
+		service.Spec.Selector = c.GetSelectorLabels()
+		service.Spec.Selector["healthy"] = "yes"
 
-		// Use `publishNotReadyAddresses` to be able to access pods even if the pod is not ready.
-		service.Spec.PublishNotReadyAddresses = true
-
-		if len(service.Spec.Ports) != 2 {
-			service.Spec.Ports = make([]core.ServicePort, 2)
+		if len(service.Spec.Ports) != 1 {
+			service.Spec.Ports = make([]core.ServicePort, 1)
 		}
 
 		service.Spec.Ports[0].Name = utils.MysqlPortName
 		service.Spec.Ports[0].Port = utils.MysqlPort
-		service.Spec.Ports[1].Name = utils.MetricsPortName
-		service.Spec.Ports[1].Port = utils.MetricsPort
+		service.Spec.Ports[0].TargetPort = intstr.FromInt(utils.MysqlPort)
 		return nil
 	})
 }

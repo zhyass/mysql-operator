@@ -27,7 +27,7 @@ import (
 	"github.com/zhyass/mysql-operator/utils"
 )
 
-// NewSlaveSVCSyncer returns a slave service syncer.
+// NewSlaveSVCSyncer returns a service syncer.
 func NewSlaveSVCSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface {
 	service := &core.Service{
 		TypeMeta: metav1.TypeMeta{
@@ -41,6 +41,7 @@ func NewSlaveSVCSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface {
 		},
 	}
 	return syncer.NewObjectSyncer("SlaveSVC", c.Unwrap(), service, cli, func() error {
+		service.Spec.Type = "ClusterIP"
 		service.Spec.Selector = c.GetSelectorLabels()
 		service.Spec.Selector["role"] = "follower"
 		service.Spec.Selector["healthy"] = "yes"
