@@ -14,9 +14,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package util
+package utils
 
 import "github.com/blang/semver"
+
+const (
+	MysqlPortName = "mysql"
+	MysqlPort     = 3306
+
+	MetricsPortName = "metrics"
+	MetricsPort     = 9104
+)
 
 var (
 	// MySQLDefaultVersion is the version for mysql that should be used

@@ -40,12 +40,11 @@ func NewConfigMapSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface 
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      c.GetNameForResource(cluster.ConfigMap),
 			Namespace: c.Namespace,
+			Labels:    c.GetLabels(),
 		},
 	}
 
 	return syncer.NewObjectSyncer("ConfigMap", c.Unwrap(), cm, cli, func() error {
-		cm.ObjectMeta.Labels = c.GetLabels()
-
 		data, err := buildMysqlConf(c)
 		if err != nil {
 			return fmt.Errorf("failed to create mysql configs: %s", err)

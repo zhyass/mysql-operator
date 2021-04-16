@@ -46,8 +46,8 @@ func NewSecretSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface {
 			secret.Data = make(map[string][]byte)
 		}
 
-		secret.Data["MONITOR_USER"] = []byte("qc_monitor")
-		if err := addRandomPassword(secret.Data, "MONITOR_PASSWORD"); err != nil {
+		secret.Data["METRICS_USER"] = []byte("qc_metrics")
+		if err := addRandomPassword(secret.Data, "METRICS_PASSWORD"); err != nil {
 			return err
 		}
 

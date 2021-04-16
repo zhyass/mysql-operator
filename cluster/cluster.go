@@ -21,9 +21,10 @@ import (
 
 	"github.com/blang/semver"
 	mysqlv1 "github.com/zhyass/mysql-operator/api/v1"
-	"github.com/zhyass/mysql-operator/util"
 	"k8s.io/apimachinery/pkg/labels"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+
+	"github.com/zhyass/mysql-operator/utils"
 )
 
 // log is for logging in this package.
@@ -118,7 +119,7 @@ func GetNameForResource(name ResourceName, clusterName string) string {
 func (c *Cluster) GetMySQLSemVer() semver.Version {
 	version := c.Spec.MysqlVersion
 	// lookup for an alias, usually this will solve 5.7 to 5.7.x
-	if v, ok := util.MySQLTagsToSemVer[version]; ok {
+	if v, ok := utils.MySQLTagsToSemVer[version]; ok {
 		version = v
 	}
 
