@@ -20,10 +20,10 @@ import (
 	"fmt"
 
 	"github.com/blang/semver"
-	mysqlv1 "github.com/zhyass/mysql-operator/api/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
+	mysqlv1 "github.com/zhyass/mysql-operator/api/v1"
 	"github.com/zhyass/mysql-operator/utils"
 )
 
@@ -58,6 +58,7 @@ func (c *Cluster) GetLabels() labels.Set {
 	}
 
 	labels := labels.Set{
+		"mysql.radondb.io/cluster":     c.Name,
 		"app.kubernetes.io/name":       "mysql",
 		"app.kubernetes.io/instance":   instance,
 		"app.kubernetes.io/version":    c.GetMySQLSemVer().String(),
@@ -70,6 +71,15 @@ func (c *Cluster) GetLabels() labels.Set {
 	}
 
 	return labels
+}
+
+// GetSelectorLabels returns the labels that will be used as selector
+func (c *Cluster) GetSelectorLabels() labels.Set {
+	return labels.Set{
+		"mysql.radondb.io/cluster":     c.Name,
+		"app.kubernetes.io/name":       "mysql",
+		"app.kubernetes.io/managed-by": "mysql.radondb.io",
+	}
 }
 
 // ResourceName is the type for aliasing resources that will be created.

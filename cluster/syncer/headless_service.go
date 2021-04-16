@@ -27,7 +27,7 @@ import (
 	"github.com/zhyass/mysql-operator/utils"
 )
 
-// NewHeadlessSVCSyncer returns a service syncer
+// NewHeadlessSVCSyncer returns a headless service syncer.
 func NewHeadlessSVCSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface {
 	service := &core.Service{
 		TypeMeta: metav1.TypeMeta{
