@@ -110,14 +110,12 @@ func (c *Cluster) GetNameForResource(name ResourceName) string {
 // GetNameForResource returns the name of a resource for a cluster
 func GetNameForResource(name ResourceName, clusterName string) string {
 	switch name {
-	case StatefulSet, ConfigMap, HealthyNodesService:
+	case StatefulSet, ConfigMap, HealthyNodesService, HeadlessSVC:
 		return fmt.Sprintf("%s-mysql", clusterName)
 	case MasterService:
 		return fmt.Sprintf("%s-master", clusterName)
 	case SlaveService:
 		return fmt.Sprintf("%s-slave", clusterName)
-	case HeadlessSVC:
-		return fmt.Sprintf("%s-headless", clusterName)
 	case Secret:
 		return fmt.Sprintf("%s-secret", clusterName)
 	default:

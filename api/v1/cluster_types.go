@@ -115,18 +115,18 @@ type MysqlConf map[string]intstr.IntOrString
 
 // PodSpec defines type for configure cluster pod spec.
 type PodSpec struct {
-	ImagePullPolicy  core.PullPolicy             `json:"imagePullPolicy,omitempty"`
-	ImagePullSecrets []core.LocalObjectReference `json:"imagePullSecrets,omitempty"`
+	ImagePullPolicy core.PullPolicy `json:"imagePullPolicy,omitempty"`
 
 	Labels             map[string]string         `json:"labels,omitempty"`
 	Annotations        map[string]string         `json:"annotations,omitempty"`
 	Resources          core.ResourceRequirements `json:"resources,omitempty"`
 	Affinity           *core.Affinity            `json:"affinity,omitempty"`
-	XenonLifecycle     *core.Lifecycle           `json:"xenonLifecycle,omitempty"`
-	NodeSelector       map[string]string         `json:"nodeSelector,omitempty"`
 	PriorityClassName  string                    `json:"priorityClassName,omitempty"`
 	Tolerations        []core.Toleration         `json:"tolerations,omitempty"`
+	SchedulerName      string                    `json:"schedulerName,omitempty"`
 	ServiceAccountName string                    `json:"serviceAccountName,omitempty"`
+
+	XenonLifecycle *core.Lifecycle `json:"xenonLifecycle,omitempty"`
 
 	// Volumes allows adding extra volumes to the statefulset
 	// +optional

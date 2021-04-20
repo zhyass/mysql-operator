@@ -1827,17 +1827,6 @@ spec:
                     description: PullPolicy describes a policy for if/when to pull
                       a container image
                     type: string
-                  imagePullSecrets:
-                    items:
-                      description: LocalObjectReference contains enough information
-                        to let you locate the referenced object inside the same namespace.
-                      properties:
-                        name:
-                          description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                            TODO: Add other useful fields. apiVersion, kind, uid?'
-                          type: string
-                      type: object
-                    type: array
                   initContainers:
                     description: InitContainers allows the user to specify extra init
                       containers
@@ -2951,10 +2940,6 @@ spec:
                     additionalProperties:
                       type: string
                     type: object
-                  nodeSelector:
-                    additionalProperties:
-                      type: string
-                    type: object
                   priorityClassName:
                     type: string
                   resources:
@@ -2984,6 +2969,8 @@ spec:
                           to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
                         type: object
                     type: object
+                  schedulerName:
+                    type: string
                   serviceAccountName:
                     type: string
                   tolerations:
