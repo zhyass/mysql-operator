@@ -35,6 +35,8 @@ type ClusterSpec struct {
 	// +optional
 	Replicas *int32 `json:"replicas,omitempty"`
 
+	InitOpts InitOpts `json:"initOpts,omitempty"`
+
 	// MysqlOpts is the options of MySQL container.
 	// +optional
 	MysqlOpts MysqlOpts `json:"mysqlOpts,omitempty"`
@@ -57,6 +59,16 @@ type ClusterSpec struct {
 	// PVC extra specifiaction
 	// +optional
 	VolumeSpec VolumeSpec `json:"volumeSpec,omitempty"`
+}
+
+// InitOpts defines the options of init container.
+type InitOpts struct {
+	// To specify the image that will be used for mysql server container.
+	// If this is specified then the mysqlVersion is used as source for MySQL server version.
+	// +optional
+	Image string `json:"image,omitempty"`
+
+	Resources core.ResourceRequirements `json:"resources,omitempty"`
 }
 
 // MysqlOpts defines the options of MySQL container.
@@ -92,6 +104,8 @@ type MysqlOpts struct {
 	// A map[string]string that will be passed to my.cnf file.
 	// +optional
 	MysqlConf MysqlConf `json:"mysqlConf,omitempty"`
+
+	Resources core.ResourceRequirements `json:"resources,omitempty"`
 }
 
 // XenonOpts defines the options of xenon container.
@@ -107,6 +121,8 @@ type XenonOpts struct {
 	// High available component election timeout. The unit is millisecond.
 	// +optional
 	ElectionTimeout *int32 `json:"electionTimeout,omitempty"`
+
+	Resources core.ResourceRequirements `json:"resources,omitempty"`
 }
 
 // MysqlConf defines type for extra cluster configs. It's a simple map between
@@ -119,14 +135,12 @@ type PodSpec struct {
 
 	Labels             map[string]string         `json:"labels,omitempty"`
 	Annotations        map[string]string         `json:"annotations,omitempty"`
-	Resources          core.ResourceRequirements `json:"resources,omitempty"`
 	Affinity           *core.Affinity            `json:"affinity,omitempty"`
 	PriorityClassName  string                    `json:"priorityClassName,omitempty"`
 	Tolerations        []core.Toleration         `json:"tolerations,omitempty"`
 	SchedulerName      string                    `json:"schedulerName,omitempty"`
 	ServiceAccountName string                    `json:"serviceAccountName,omitempty"`
-
-	XenonLifecycle *core.Lifecycle `json:"xenonLifecycle,omitempty"`
+	Resources          core.ResourceRequirements `json:"resources,omitempty"`
 
 	// Volumes allows adding extra volumes to the statefulset
 	// +optional
@@ -135,14 +149,6 @@ type PodSpec struct {
 	// VolumesMounts allows mounting extra volumes to the mysql container
 	// +optional
 	VolumeMounts []core.VolumeMount `json:"volumeMounts,omitempty"`
-
-	// InitContainers allows the user to specify extra init containers
-	// +optional
-	InitContainers []core.Container `json:"initContainers,omitempty"`
-
-	// Containers allows for user to specify extra sidecar containers to run along with mysql
-	// +optional
-	Containers []core.Container `json:"containers,omitempty"`
 }
 
 // VolumeSpec is the desired spec for storing mysql data. Only one of its
