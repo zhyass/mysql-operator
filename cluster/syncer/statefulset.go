@@ -21,6 +21,7 @@ import (
 
 	"github.com/presslabs/controller-util/syncer"
 	"github.com/zhyass/mysql-operator/cluster"
+	"github.com/zhyass/mysql-operator/cluster/container"
 	"github.com/zhyass/mysql-operator/utils"
 	apps "k8s.io/api/apps/v1"
 	core "k8s.io/api/core/v1"
@@ -69,7 +70,7 @@ func getLabels(c *cluster.Cluster) map[string]string {
 
 func ensurePodSpec(c *cluster.Cluster) core.PodSpec {
 	return core.PodSpec{
-		InitContainers:     ensureInitContainers(c),
+		InitContainers:     []core.Container{container.EnsureContainer(utils.ContainerInitMysqlName, c)},
 		Containers:         nil,
 		Volumes:            nil,
 		SchedulerName:      c.Spec.PodSpec.SchedulerName,
@@ -78,79 +79,4 @@ func ensurePodSpec(c *cluster.Cluster) core.PodSpec {
 		PriorityClassName:  c.Spec.PodSpec.PriorityClassName,
 		Tolerations:        c.Spec.PodSpec.Tolerations,
 	}
-}
-
-func ensureInitContainers(c *cluster.Cluster) []core.Container {
-	initMysql := core.Container{
-		Name:         containerInitMysqlName,
-		Image:        c.Spec.InitOpts.Image,
-		Resources:    getResources(containerInitMysqlName, c),
-		Command:      []string{"sh", "-c"},
-		Args:         buildInitMysqlArgs(c),
-		VolumeMounts: getVolumeMounts(containerInitMysqlName),
-	}
-	return []core.Container{initMysql}
-}
-
-func getResources(name string, c *cluster.Cluster) core.ResourceRequirements {
-	switch name {
-	case containerInitMysqlName:
-		return c.Spec.InitOpts.Resources
-	case containerMysqlName:
-		return c.Spec.MysqlOpts.Resources
-	case containerXenonName:
-		return c.Spec.XenonOpts.Resources
-	}
-	return c.Spec.PodSpec.Resources
-}
-
-func getVolumeMounts(name string) []core.VolumeMount {
-	var mounts []core.VolumeMount
-	switch name {
-	case containerInitMysqlName:
-		mounts = []core.VolumeMount{
-			{
-				Name:      confVolumeName,
-				MountPath: "/mnt/conf.d",
-			},
-			{
-				Name:      scriptsVolumeName,
-				MountPath: "/mnt/scripts",
-			},
-			{
-				Name:      confMapVolumeName,
-				MountPath: "/mnt/config-map",
-			},
-			{
-				Name:      dataVolumeName,
-				MountPath: "/mnt/data",
-			},
-			{
-				Name:      sysVolumeName,
-				MountPath: "/host-sys",
-			},
-		}
-	}
-	return mounts
-}
-
-func buildInitMysqlArgs(c *cluster.Cluster) []string {
-	str := `# Generate mysql server-id from pod ordinal index.
-ordinal=$(echo $(hostname) | tr -cd "[0-9]")
-# Copy server-id.conf adding offset to avoid reserved server-id=0 value.
-cat /mnt/config-map/server-id.cnf | sed s/@@SERVER_ID@@/$((100 + $ordinal))/g > /mnt/conf.d/server-id.cnf
-# Copy appropriate conf.d files from config-map to config mount.
-cp -f /mnt/config-map/node.cnf /mnt/conf.d/
-cp -f /mnt/config-map/*.sh /mnt/scripts/
-chmod +x /mnt/scripts/*
-# remove lost+found.
-rm -rf /mnt/data/lost+found
-`
-	if c.Spec.MysqlOpts.InitTokudb {
-		str = fmt.Sprintf(`%s# For install tokudb.
-printf '\nloose_tokudb_directio = ON\n' >> /mnt/conf.d/node.cnf
-echo never > /host-sys/kernel/mm/transparent_hugepage/enabled
-`, str)
-	}
-	return []string{str}
 }

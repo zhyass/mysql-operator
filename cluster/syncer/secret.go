@@ -47,21 +47,21 @@ func NewSecretSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface {
 			secret.Data = make(map[string][]byte)
 		}
 
-		secret.Data["METRICS_USER"] = []byte("qc_metrics")
-		if err := addRandomPassword(secret.Data, "METRICS_PASSWORD"); err != nil {
+		secret.Data["metrics-user"] = []byte("qc_metrics")
+		if err := addRandomPassword(secret.Data, "metrics-password"); err != nil {
 			return err
 		}
 
-		secret.Data["REPLICATION_USER"] = []byte("qc_repl")
-		if err := addRandomPassword(secret.Data, "REPLICATION_PASSWORD"); err != nil {
+		secret.Data["replication-user"] = []byte("qc_repl")
+		if err := addRandomPassword(secret.Data, "replication-password"); err != nil {
 			return err
 		}
 
-		secret.Data["ROOT_PASSWORD"] = []byte(c.Spec.MysqlOpts.RootPassword)
+		secret.Data["root-password"] = []byte(c.Spec.MysqlOpts.RootPassword)
 
-		secret.Data["USER"] = []byte(c.Spec.MysqlOpts.User)
-		secret.Data["PASSWORD"] = []byte(c.Spec.MysqlOpts.Password)
-		secret.Data["DATABASE"] = []byte(c.Spec.MysqlOpts.Database)
+		secret.Data["mysql-user"] = []byte(c.Spec.MysqlOpts.User)
+		secret.Data["mysql-password"] = []byte(c.Spec.MysqlOpts.Password)
+		secret.Data["mysql-database"] = []byte(c.Spec.MysqlOpts.Database)
 		return nil
 	})
 }

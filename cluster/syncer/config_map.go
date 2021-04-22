@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/blang/semver"
 	"github.com/go-ini/ini"
 	"github.com/presslabs/controller-util/syncer"
 	core "k8s.io/api/core/v1"
@@ -29,6 +30,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/zhyass/mysql-operator/cluster"
+	"github.com/zhyass/mysql-operator/utils"
 )
 
 func NewConfigMapSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface {
@@ -124,7 +126,10 @@ func buildXenonConf(c *cluster.Cluster) string {
 	host := c.GetOwnHostName()
 
 	version := "mysql80"
-	sv := c.GetMySQLSemVer()
+	sv, err := semver.Make(c.GetMySQLVersion())
+	if err != nil {
+		log.Error(err, "failed to parse given MySQL version", "input", c.GetMySQLVersion())
+	}
 	if sv.Major == 5 {
 		if sv.Minor == 6 {
 			version = "mysql56"
@@ -138,7 +143,7 @@ func buildXenonConf(c *cluster.Cluster) string {
 		"level": "INFO"
 	},
 	"server": {
-		"endpoint": "%s:8801"
+		"endpoint": "%s:%d"
 	},
 	"replication": {
 		"passwd": "@@REPL_PASSWD@@",
@@ -169,5 +174,5 @@ func buildXenonConf(c *cluster.Cluster) string {
 		"super-idle": false
 	}
 }
-`, host, requestTimeout, pingTimeout, version, electionTimeout, admitDefeatHearbeatCount, heartbeatTimeout)
+`, host, utils.XenonPort, requestTimeout, pingTimeout, version, electionTimeout, admitDefeatHearbeatCount, heartbeatTimeout)
 }

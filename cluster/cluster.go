@@ -19,7 +19,6 @@ package cluster
 import (
 	"fmt"
 
-	"github.com/blang/semver"
 	"k8s.io/apimachinery/pkg/labels"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
@@ -61,7 +60,7 @@ func (c *Cluster) GetLabels() labels.Set {
 		"mysql.radondb.io/cluster":     c.Name,
 		"app.kubernetes.io/name":       "mysql",
 		"app.kubernetes.io/instance":   instance,
-		"app.kubernetes.io/version":    c.GetMySQLSemVer().String(),
+		"app.kubernetes.io/version":    c.GetMySQLVersion(),
 		"app.kubernetes.io/component":  component,
 		"app.kubernetes.io/managed-by": "mysql.radondb.io",
 	}
@@ -123,27 +122,19 @@ func GetNameForResource(name ResourceName, clusterName string) string {
 	}
 }
 
-// GetMySQLSemVer returns the MySQL server version in semver format, or the default one
-func (c *Cluster) GetMySQLSemVer() semver.Version {
+// GetMySQLVersion returns the MySQL server version.
+func (c *Cluster) GetMySQLVersion() string {
 	version := c.Spec.MysqlVersion
 	// lookup for an alias, usually this will solve 5.7 to 5.7.x
 	if v, ok := utils.MySQLTagsToSemVer[version]; ok {
 		version = v
 	}
 
-	sv, err := semver.Make(version)
-	if err != nil {
-		log.Error(err, "failed to parse given MySQL version", "input", version)
+	if _, ok := utils.MysqlImageVersions[version]; !ok {
+		version = utils.MySQLDefaultVersion
 	}
 
-	// if there is an error will return 0.0.0
-	return sv
-}
-
-func (c *Cluster) GetPodHostName(p int) string {
-	return fmt.Sprintf("%s-%d.%s.%s", c.GetNameForResource(StatefulSet), p,
-		c.GetNameForResource(HeadlessSVC),
-		c.Namespace)
+	return version
 }
 
 func (c *Cluster) GetOwnHostName() string {

@@ -35,8 +35,6 @@ type ClusterSpec struct {
 	// +optional
 	Replicas *int32 `json:"replicas,omitempty"`
 
-	InitOpts InitOpts `json:"initOpts,omitempty"`
-
 	// MysqlOpts is the options of MySQL container.
 	// +optional
 	MysqlOpts MysqlOpts `json:"mysqlOpts,omitempty"`
@@ -61,23 +59,8 @@ type ClusterSpec struct {
 	VolumeSpec VolumeSpec `json:"volumeSpec,omitempty"`
 }
 
-// InitOpts defines the options of init container.
-type InitOpts struct {
-	// To specify the image that will be used for mysql server container.
-	// If this is specified then the mysqlVersion is used as source for MySQL server version.
-	// +optional
-	Image string `json:"image,omitempty"`
-
-	Resources core.ResourceRequirements `json:"resources,omitempty"`
-}
-
 // MysqlOpts defines the options of MySQL container.
 type MysqlOpts struct {
-	// To specify the image that will be used for mysql server container.
-	// If this is specified then the mysqlVersion is used as source for MySQL server version.
-	// +optional
-	Image string `json:"image,omitempty"`
-
 	// Password for the root user.
 	// +optional
 	RootPassword string `json:"rootPassword,omitempty"`
@@ -141,6 +124,12 @@ type PodSpec struct {
 	SchedulerName      string                    `json:"schedulerName,omitempty"`
 	ServiceAccountName string                    `json:"serviceAccountName,omitempty"`
 	Resources          core.ResourceRequirements `json:"resources,omitempty"`
+
+	// +optional
+	BusyboxImage string `json:"busyboxImage,omitempty"`
+
+	// +optional
+	MetricsImage string `json:"metricsImage,omitempty"`
 
 	// Volumes allows adding extra volumes to the statefulset
 	// +optional

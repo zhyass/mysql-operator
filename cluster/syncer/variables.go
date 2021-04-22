@@ -81,25 +81,3 @@ var mysqlStaticConfigs = map[string]string{
 	"innodb_autoinc_lock_mode":    "2",
 	"performance_schema":          "1",
 }
-
-// containers names
-const (
-	// init containers
-	containerInitMysqlName = "init-mysql"
-
-	// containers
-	containerMysqlName   = "mysql"
-	containerXenonName   = "xenon"
-	containerMetricsName = "metrics"
-	containeSlowLogName  = "slowlog"
-)
-
-// volumes names
-const (
-	confVolumeName    = "conf"
-	confMapVolumeName = "config-map"
-	scriptsVolumeName = "scripts"
-	logsVolumeName    = "logs"
-	dataVolumeName    = "data"
-	sysVolumeName     = "host-sys"
-)
