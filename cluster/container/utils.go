@@ -20,16 +20,6 @@ import (
 	core "k8s.io/api/core/v1"
 )
 
-// volumes names
-const (
-	confVolumeName    = "conf"
-	confMapVolumeName = "config-map"
-	scriptsVolumeName = "scripts"
-	logsVolumeName    = "logs"
-	dataVolumeName    = "data"
-	sysVolumeName     = "host-sys"
-)
-
 func getEnvVarFromSecret(sctName, name, key string, opt bool) core.EnvVar {
 	return core.EnvVar{
 		Name: name,

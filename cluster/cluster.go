@@ -19,6 +19,9 @@ package cluster
 import (
 	"fmt"
 
+	core "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
@@ -81,6 +84,116 @@ func (c *Cluster) GetSelectorLabels() labels.Set {
 	}
 }
 
+// GetMySQLVersion returns the MySQL server version.
+func (c *Cluster) GetMySQLVersion() string {
+	version := c.Spec.MysqlVersion
+	// lookup for an alias, usually this will solve 5.7 to 5.7.x
+	if v, ok := utils.MySQLTagsToSemVer[version]; ok {
+		version = v
+	}
+
+	if _, ok := utils.MysqlImageVersions[version]; !ok {
+		version = utils.MySQLDefaultVersion
+	}
+
+	return version
+}
+
+func (c *Cluster) GetOwnHostName() string {
+	return fmt.Sprintf("%s.%s.%s", c.ObjectMeta.Name,
+		c.GetNameForResource(HeadlessSVC),
+		c.Namespace)
+}
+
+func (c *Cluster) CreatePeers() string {
+	str := ""
+	for i := 0; i < int(*c.Spec.Replicas); i++ {
+		if i > 0 {
+			str += ","
+		}
+		str += c.GetPodHostName(i)
+	}
+	return str
+}
+
+func (c *Cluster) GetPodHostName(p int) string {
+	return fmt.Sprintf("%s-%d.%s.%s", c.GetNameForResource(StatefulSet), p,
+		c.GetNameForResource(HeadlessSVC),
+		c.Namespace)
+}
+
+func (c *Cluster) EnsureVolumes() []core.Volume {
+	var volumes []core.Volume
+	if !c.Spec.Persistence.Enabled {
+		volumes = append(volumes, core.Volume{
+			Name: utils.DataVolumeName,
+			VolumeSource: core.VolumeSource{
+				EmptyDir: &core.EmptyDirVolumeSource{},
+			},
+		})
+	}
+
+	volumes = append(volumes,
+		core.Volume{
+			Name: utils.ConfVolumeName,
+			VolumeSource: core.VolumeSource{
+				EmptyDir: &core.EmptyDirVolumeSource{},
+			},
+		},
+		core.Volume{
+			Name: utils.LogsVolumeName,
+			VolumeSource: core.VolumeSource{
+				EmptyDir: &core.EmptyDirVolumeSource{},
+			},
+		},
+		core.Volume{
+			Name: utils.ConfMapVolumeName,
+			VolumeSource: core.VolumeSource{
+				ConfigMap: &core.ConfigMapVolumeSource{
+					LocalObjectReference: core.LocalObjectReference{
+						Name: c.GetNameForResource(ConfigMap),
+					},
+				},
+			},
+		},
+		core.Volume{
+			Name: utils.SysVolumeName,
+			VolumeSource: core.VolumeSource{
+				HostPath: &core.HostPathVolumeSource{
+					Path: "/sys",
+				},
+			},
+		},
+	)
+	return volumes
+}
+
+func (c *Cluster) EnsureVolumeClaimTemplates() []core.PersistentVolumeClaim {
+	if !c.Spec.Persistence.Enabled {
+		return nil
+	}
+
+	storageClassName := ""
+	if c.Spec.Persistence.StorageClass != "" {
+		storageClassName = c.Spec.Persistence.StorageClass
+	}
+	data := core.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: utils.DataVolumeName,
+		},
+		Spec: core.PersistentVolumeClaimSpec{
+			AccessModes: c.Spec.Persistence.AccessModes,
+			Resources: core.ResourceRequirements{
+				Requests: core.ResourceList{
+					core.ResourceStorage: resource.MustParse(c.Spec.Persistence.Size),
+				},
+			},
+			StorageClassName: &storageClassName,
+		},
+	}
+	return []core.PersistentVolumeClaim{data}
+}
+
 // ResourceName is the type for aliasing resources that will be created.
 type ResourceName string
 
@@ -120,25 +233,4 @@ func GetNameForResource(name ResourceName, clusterName string) string {
 	default:
 		return fmt.Sprintf("%s-mysql", clusterName)
 	}
-}
-
-// GetMySQLVersion returns the MySQL server version.
-func (c *Cluster) GetMySQLVersion() string {
-	version := c.Spec.MysqlVersion
-	// lookup for an alias, usually this will solve 5.7 to 5.7.x
-	if v, ok := utils.MySQLTagsToSemVer[version]; ok {
-		version = v
-	}
-
-	if _, ok := utils.MysqlImageVersions[version]; !ok {
-		version = utils.MySQLDefaultVersion
-	}
-
-	return version
-}
-
-func (c *Cluster) GetOwnHostName() string {
-	return fmt.Sprintf("%s.%s.%s", c.ObjectMeta.Name,
-		c.GetNameForResource(HeadlessSVC),
-		c.Namespace)
 }

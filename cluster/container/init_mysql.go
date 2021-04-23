@@ -20,6 +20,7 @@ import (
 	"fmt"
 
 	"github.com/zhyass/mysql-operator/cluster"
+	"github.com/zhyass/mysql-operator/utils"
 	core "k8s.io/api/core/v1"
 )
 
@@ -44,8 +45,6 @@ ordinal=$(echo $(hostname) | tr -cd "[0-9]")
 cat /mnt/config-map/server-id.cnf | sed s/@@SERVER_ID@@/$((100 + $ordinal))/g > /mnt/conf.d/server-id.cnf
 # Copy appropriate conf.d files from config-map to config mount.
 cp -f /mnt/config-map/node.cnf /mnt/conf.d/
-cp -f /mnt/config-map/*.sh /mnt/scripts/
-chmod +x /mnt/scripts/*
 # remove lost+found.
 rm -rf /mnt/data/lost+found
 `
@@ -85,23 +84,19 @@ func (c *initMysql) getReadinessProbe() *core.Probe {
 func (c *initMysql) getVolumeMounts() []core.VolumeMount {
 	return []core.VolumeMount{
 		{
-			Name:      confVolumeName,
+			Name:      utils.ConfVolumeName,
 			MountPath: "/mnt/conf.d",
 		},
 		{
-			Name:      scriptsVolumeName,
-			MountPath: "/mnt/scripts",
-		},
-		{
-			Name:      confMapVolumeName,
+			Name:      utils.ConfMapVolumeName,
 			MountPath: "/mnt/config-map",
 		},
 		{
-			Name:      dataVolumeName,
+			Name:      utils.DataVolumeName,
 			MountPath: "/mnt/data",
 		},
 		{
-			Name:      sysVolumeName,
+			Name:      utils.SysVolumeName,
 			MountPath: "/host-sys",
 		},
 	}

@@ -51,5 +51,14 @@ const (
 	ContainerMysqlName   = "mysql"
 	ContainerXenonName   = "xenon"
 	ContainerMetricsName = "metrics"
-	ContaineSlowLogName  = "slowlog"
+	ContainerSlowLogName = "slowlog"
+)
+
+// volumes names
+const (
+	ConfVolumeName    = "conf"
+	ConfMapVolumeName = "config-map"
+	LogsVolumeName    = "logs"
+	DataVolumeName    = "data"
+	SysVolumeName     = "host-sys"
 )

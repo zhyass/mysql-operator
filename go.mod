@@ -6,6 +6,7 @@ require (
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/go-ini/ini v1.62.0
 	github.com/go-logr/logr v0.4.0
+	github.com/imdario/mergo v0.3.11
 	github.com/kr/text v0.2.0 // indirect
 	github.com/onsi/ginkgo v1.15.0
 	github.com/onsi/gomega v1.10.5

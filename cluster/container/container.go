@@ -46,7 +46,7 @@ func EnsureContainer(name string, c *cluster.Cluster) core.Container {
 		ctr = &xenon{c, name}
 	case utils.ContainerMetricsName:
 		ctr = &metrics{c, name}
-	case utils.ContaineSlowLogName:
+	case utils.ContainerSlowLogName:
 		ctr = &slowLog{c, name}
 	}
 

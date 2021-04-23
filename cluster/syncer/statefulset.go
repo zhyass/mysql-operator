@@ -19,6 +19,8 @@ package syncer
 import (
 	"fmt"
 
+	"github.com/imdario/mergo"
+	"github.com/presslabs/controller-util/mergo/transformers"
 	"github.com/presslabs/controller-util/syncer"
 	"github.com/zhyass/mysql-operator/cluster"
 	"github.com/zhyass/mysql-operator/cluster/container"
@@ -48,7 +50,10 @@ func NewStatefulSetSyncer(cli client.Client, c *cluster.Cluster) syncer.Interfac
 		obj.Spec.Replicas = c.Spec.Replicas
 		obj.Spec.Selector = metav1.SetAsLabelSelector(c.GetSelectorLabels())
 
-		obj.Spec.Template.ObjectMeta.Labels = getLabels(c)
+		obj.Spec.Template.ObjectMeta.Labels = c.GetLabels()
+		for k, v := range c.Spec.PodSpec.Labels {
+			obj.Spec.Template.ObjectMeta.Labels[k] = v
+		}
 		obj.Spec.Template.Annotations = c.Spec.PodSpec.Annotations
 		if len(obj.Spec.Template.ObjectMeta.Annotations) == 0 {
 			obj.Spec.Template.ObjectMeta.Annotations = make(map[string]string)
@@ -56,23 +61,30 @@ func NewStatefulSetSyncer(cli client.Client, c *cluster.Cluster) syncer.Interfac
 		obj.Spec.Template.ObjectMeta.Annotations["prometheus.io/scrape"] = "true"
 		obj.Spec.Template.ObjectMeta.Annotations["prometheus.io/port"] = fmt.Sprintf("%d", utils.MetricsPort)
 
+		err := mergo.Merge(obj.Spec.Template.Spec, ensurePodSpec(c), mergo.WithTransformers(transformers.PodSpec))
+		if err != nil {
+			return err
+		}
+		// mergo will add new keys for Tolerations and keep the others instead of removing them
+		obj.Spec.Template.Spec.Tolerations = c.Spec.PodSpec.Tolerations
+
+		if c.Spec.Persistence.Enabled {
+			obj.Spec.VolumeClaimTemplates = c.EnsureVolumeClaimTemplates()
+		}
 		return nil
 	})
 }
 
-func getLabels(c *cluster.Cluster) map[string]string {
-	labels := c.GetLabels()
-	for k, v := range c.Spec.PodSpec.Labels {
-		labels[k] = v
-	}
-	return labels
-}
-
 func ensurePodSpec(c *cluster.Cluster) core.PodSpec {
+	initMysql := container.EnsureContainer(utils.ContainerInitMysqlName, c)
+	mysql := container.EnsureContainer(utils.ContainerMysqlName, c)
+	xenon := container.EnsureContainer(utils.ContainerXenonName, c)
+	metrics := container.EnsureContainer(utils.ContainerMetricsName, c)
+	slowlog := container.EnsureContainer(utils.ContainerSlowLogName, c)
 	return core.PodSpec{
-		InitContainers:     []core.Container{container.EnsureContainer(utils.ContainerInitMysqlName, c)},
-		Containers:         nil,
-		Volumes:            nil,
+		InitContainers:     []core.Container{initMysql},
+		Containers:         []core.Container{mysql, xenon, metrics, slowlog},
+		Volumes:            c.EnsureVolumes(),
 		SchedulerName:      c.Spec.PodSpec.SchedulerName,
 		ServiceAccountName: c.Spec.PodSpec.ServiceAccountName,
 		Affinity:           c.Spec.PodSpec.Affinity,

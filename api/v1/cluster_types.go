@@ -56,7 +56,7 @@ type ClusterSpec struct {
 
 	// PVC extra specifiaction
 	// +optional
-	VolumeSpec VolumeSpec `json:"volumeSpec,omitempty"`
+	Persistence Persistence `json:"persistence,omitempty"`
 }
 
 // MysqlOpts defines the options of MySQL container.
@@ -140,25 +140,22 @@ type PodSpec struct {
 	VolumeMounts []core.VolumeMount `json:"volumeMounts,omitempty"`
 }
 
-// VolumeSpec is the desired spec for storing mysql data. Only one of its
+// Persistence is the desired spec for storing mysql data. Only one of its
 // members may be specified.
-type VolumeSpec struct {
-	// EmptyDir to use as data volume for mysql. EmptyDir represents a temporary
-	// directory that shares a pod's lifetime.
-	// +optional
-	EmptyDir *core.EmptyDirVolumeSource `json:"emptyDir,omitempty"`
+type Persistence struct {
+	Enabled bool `json:"enabled,omitempty"`
 
-	// HostPath to use as data volume for mysql. HostPath represents a
-	// pre-existing file or directory on the host machine that is directly
-	// exposed to the container.
+	// AccessModes contains the desired access modes the volume should have.
+	// More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#access-modes-1
 	// +optional
-	HostPath *core.HostPathVolumeSource `json:"hostPath,omitempty"`
+	AccessModes []core.PersistentVolumeAccessMode `json:"accessModes,omitempty"`
 
-	// PersistentVolumeClaim to specify PVC spec for the volume for mysql data.
-	// It has the highest level of precedence, followed by HostPath and
-	// EmptyDir. And represents the PVC specification.
+	// Name of the StorageClass required by the claim.
+	// More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#class-1
 	// +optional
-	PersistentVolumeClaim *core.PersistentVolumeClaimSpec `json:"persistentVolumeClaim,omitempty"`
+	StorageClass string `json:"storageClass,omitempty"`
+
+	Size string `json:"size,omitempty"`
 }
 
 // ClusterCondition defines type for cluster conditions.

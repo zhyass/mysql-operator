@@ -87,10 +87,11 @@ func (c *xenon) getEnvVars() []core.EnvVar {
 }
 
 func (c *xenon) getLifecycle() *core.Lifecycle {
+	arg := fmt.Sprintf("until (xenoncli xenon ping && xenoncli cluster add %s) > /dev/null 2>&1; do sleep 2; done", c.CreatePeers())
 	return &core.Lifecycle{
 		PostStart: &core.Handler{
 			Exec: &core.ExecAction{
-				Command: []string{"sh", "-c", `until (xenoncli xenon ping && xenoncli cluster add "$(/scripts/create-peers.sh)") > /dev/null 2>&1; do sleep 2; done`},
+				Command: []string{"sh", "-c", arg},
 			},
 		},
 	}
@@ -140,10 +141,5 @@ func (c *xenon) getReadinessProbe() *core.Probe {
 }
 
 func (c *xenon) getVolumeMounts() []core.VolumeMount {
-	return []core.VolumeMount{
-		{
-			Name:      scriptsVolumeName,
-			MountPath: "/scripts",
-		},
-	}
+	return nil
 }

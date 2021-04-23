@@ -18,6 +18,7 @@ package container
 
 import (
 	"github.com/zhyass/mysql-operator/cluster"
+	"github.com/zhyass/mysql-operator/utils"
 	core "k8s.io/api/core/v1"
 )
 
@@ -66,7 +67,7 @@ func (c *slowLog) getReadinessProbe() *core.Probe {
 func (c *slowLog) getVolumeMounts() []core.VolumeMount {
 	return []core.VolumeMount{
 		{
-			Name:      logsVolumeName,
+			Name:      utils.LogsVolumeName,
 			MountPath: "/logs",
 		},
 	}
