@@ -40,7 +40,7 @@ func NewConfigMapSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface 
 			Kind:       "ConfigMap",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      c.GetNameForResource(cluster.ConfigMap),
+			Name:      c.GetNameForResource(utils.ConfigMap),
 			Namespace: c.Namespace,
 			Labels:    c.GetLabels(),
 		},

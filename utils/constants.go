@@ -62,3 +62,23 @@ const (
 	DataVolumeName    = "data"
 	SysVolumeName     = "host-sys"
 )
+
+// ResourceName is the type for aliasing resources that will be created.
+type ResourceName string
+
+const (
+	// HeadlessSVC is the alias of the headless service resource
+	HeadlessSVC ResourceName = "headless"
+	// StatefulSet is the alias of the statefulset resource
+	StatefulSet ResourceName = "mysql"
+	// ConfigMap is the alias for mysql configs, the config map resource
+	ConfigMap ResourceName = "config-files"
+	// MasterService is the name of the service that points to master node
+	MasterService ResourceName = "master-service"
+	// SlaveService is the name of a service that points healthy slaves (excludes master)
+	SlaveService ResourceName = "slave-service"
+	// HealthyNodesService is the name of a service that contains all healthy nodes
+	HealthyNodesService ResourceName = "healthy-nodes-service"
+	// Secret is the name of the "private" secret that contains operator related credentials
+	Secret ResourceName = "secret"
+)

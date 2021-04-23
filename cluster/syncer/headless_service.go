@@ -35,7 +35,7 @@ func NewHeadlessSVCSyncer(cli client.Client, c *cluster.Cluster) syncer.Interfac
 			Kind:       "Service",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      c.GetNameForResource(cluster.HeadlessSVC),
+			Name:      c.GetNameForResource(utils.HeadlessSVC),
 			Namespace: c.Namespace,
 			Labels: map[string]string{
 				"app.kubernetes.io/name":       "mysql",

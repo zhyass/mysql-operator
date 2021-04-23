@@ -35,7 +35,7 @@ func NewMasterSVCSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface 
 			Kind:       "Service",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      c.GetNameForResource(cluster.MasterService),
+			Name:      c.GetNameForResource(utils.MasterService),
 			Namespace: c.Namespace,
 			Labels:    c.GetLabels(),
 		},

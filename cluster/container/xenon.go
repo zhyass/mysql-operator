@@ -43,7 +43,7 @@ func (c *xenon) getCommand() []string {
 }
 
 func (c *xenon) getEnvVars() []core.EnvVar {
-	sctName := c.GetNameForResource(cluster.Secret)
+	sctName := c.GetNameForResource(utils.Secret)
 
 	rootPwd := getEnvVarFromSecret(sctName, "MYSQL_ROOT_PASSWORD", "root-password", false)
 	replUser := getEnvVarFromSecret(sctName, "MYSQL_REPL_USER", "replication-user", true)
@@ -59,7 +59,7 @@ func (c *xenon) getEnvVars() []core.EnvVar {
 	}
 	host := core.EnvVar{
 		Name:  "HOST",
-		Value: fmt.Sprintf("$(POD_HOSTNAME).%s.%s", c.GetNameForResource(cluster.HeadlessSVC), c.Namespace),
+		Value: fmt.Sprintf("$(POD_HOSTNAME).%s.%s", c.GetNameForResource(utils.HeadlessSVC), c.Namespace),
 	}
 
 	env := []core.EnvVar{rootPwd, replUser, replPwd, podHostName, host}

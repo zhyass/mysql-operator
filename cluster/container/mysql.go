@@ -33,7 +33,7 @@ func (c *mysql) getName() string {
 }
 
 func (c *mysql) getImage() string {
-	img, _ := utils.MysqlImageVersions[c.GetMySQLVersion()]
+	img := utils.MysqlImageVersions[c.GetMySQLVersion()]
 	return img
 }
 
@@ -42,7 +42,7 @@ func (c *mysql) getCommand() []string {
 }
 
 func (c *mysql) getEnvVars() []core.EnvVar {
-	sctName := c.GetNameForResource(cluster.Secret)
+	sctName := c.GetNameForResource(utils.Secret)
 
 	rootPwd := getEnvVarFromSecret(sctName, "MYSQL_ROOT_PASSWORD", "root-password", false)
 	replUser := getEnvVarFromSecret(sctName, "MYSQL_REPL_USER", "replication-user", true)

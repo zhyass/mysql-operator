@@ -35,7 +35,7 @@ func NewHealthySVCSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface
 			Kind:       "Service",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      c.GetNameForResource(cluster.HealthyNodesService),
+			Name:      c.GetNameForResource(utils.HealthyNodesService),
 			Namespace: c.Namespace,
 			Labels:    c.GetLabels(),
 		},

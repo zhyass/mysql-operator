@@ -101,7 +101,7 @@ func (c *Cluster) GetMySQLVersion() string {
 
 func (c *Cluster) GetOwnHostName() string {
 	return fmt.Sprintf("%s.%s.%s", c.ObjectMeta.Name,
-		c.GetNameForResource(HeadlessSVC),
+		c.GetNameForResource(utils.HeadlessSVC),
 		c.Namespace)
 }
 
@@ -117,8 +117,8 @@ func (c *Cluster) CreatePeers() string {
 }
 
 func (c *Cluster) GetPodHostName(p int) string {
-	return fmt.Sprintf("%s-%d.%s.%s", c.GetNameForResource(StatefulSet), p,
-		c.GetNameForResource(HeadlessSVC),
+	return fmt.Sprintf("%s-%d.%s.%s", c.GetNameForResource(utils.StatefulSet), p,
+		c.GetNameForResource(utils.HeadlessSVC),
 		c.Namespace)
 }
 
@@ -151,7 +151,7 @@ func (c *Cluster) EnsureVolumes() []core.Volume {
 			VolumeSource: core.VolumeSource{
 				ConfigMap: &core.ConfigMapVolumeSource{
 					LocalObjectReference: core.LocalObjectReference{
-						Name: c.GetNameForResource(ConfigMap),
+						Name: c.GetNameForResource(utils.ConfigMap),
 					},
 				},
 			},
@@ -194,43 +194,18 @@ func (c *Cluster) EnsureVolumeClaimTemplates() []core.PersistentVolumeClaim {
 	return []core.PersistentVolumeClaim{data}
 }
 
-// ResourceName is the type for aliasing resources that will be created.
-type ResourceName string
-
-const (
-	// HeadlessSVC is the alias of the headless service resource
-	HeadlessSVC ResourceName = "headless"
-	// StatefulSet is the alias of the statefulset resource
-	StatefulSet ResourceName = "mysql"
-	// ConfigMap is the alias for mysql configs, the config map resource
-	ConfigMap ResourceName = "config-files"
-	// MasterService is the name of the service that points to master node
-	MasterService ResourceName = "master-service"
-	// SlaveService is the name of a service that points healthy slaves (excludes master)
-	SlaveService ResourceName = "slave-service"
-	// HealthyNodesService is the name of a service that contains all healthy nodes
-	HealthyNodesService ResourceName = "healthy-nodes-service"
-	// Secret is the name of the "private" secret that contains operator related credentials
-	Secret ResourceName = "secret"
-)
-
 // GetNameForResource returns the name of a resource from above
-func (c *Cluster) GetNameForResource(name ResourceName) string {
-	return GetNameForResource(name, c.Name)
-}
-
-// GetNameForResource returns the name of a resource for a cluster
-func GetNameForResource(name ResourceName, clusterName string) string {
+func (c *Cluster) GetNameForResource(name utils.ResourceName) string {
 	switch name {
-	case StatefulSet, ConfigMap, HealthyNodesService, HeadlessSVC:
-		return fmt.Sprintf("%s-mysql", clusterName)
-	case MasterService:
-		return fmt.Sprintf("%s-master", clusterName)
-	case SlaveService:
-		return fmt.Sprintf("%s-slave", clusterName)
-	case Secret:
-		return fmt.Sprintf("%s-secret", clusterName)
+	case utils.StatefulSet, utils.ConfigMap, utils.HealthyNodesService, utils.HeadlessSVC:
+		return fmt.Sprintf("%s-mysql", c.Name)
+	case utils.MasterService:
+		return fmt.Sprintf("%s-master", c.Name)
+	case utils.SlaveService:
+		return fmt.Sprintf("%s-slave", c.Name)
+	case utils.Secret:
+		return fmt.Sprintf("%s-secret", c.Name)
 	default:
-		return fmt.Sprintf("%s-mysql", clusterName)
+		return fmt.Sprintf("%s-mysql", c.Name)
 	}
 }

@@ -24,6 +24,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/zhyass/mysql-operator/cluster"
+	"github.com/zhyass/mysql-operator/utils"
 )
 
 const (
@@ -37,7 +38,7 @@ func NewSecretSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface {
 			Kind:       "Secret",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      c.GetNameForResource(cluster.Secret),
+			Name:      c.GetNameForResource(utils.Secret),
 			Namespace: c.Namespace,
 		},
 	}
