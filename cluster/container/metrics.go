@@ -34,7 +34,7 @@ func (c *metrics) getName() string {
 }
 
 func (c *metrics) getImage() string {
-	return c.Spec.PodSpec.MetricsImage
+	return c.Spec.MetricsOpts.Image
 }
 
 func (c *metrics) getCommand() []string {
@@ -53,7 +53,7 @@ func (c *metrics) getLifecycle() *core.Lifecycle {
 }
 
 func (c *metrics) getResources() core.ResourceRequirements {
-	return c.Spec.PodSpec.Resources
+	return c.Spec.MetricsOpts.Resources
 }
 
 func (c *metrics) getPorts() []core.ContainerPort {

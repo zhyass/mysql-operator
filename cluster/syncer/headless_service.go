@@ -61,8 +61,10 @@ func NewHeadlessSVCSyncer(cli client.Client, c *cluster.Cluster) syncer.Interfac
 
 		service.Spec.Ports[0].Name = utils.MysqlPortName
 		service.Spec.Ports[0].Port = utils.MysqlPort
-		service.Spec.Ports[1].Name = utils.MetricsPortName
-		service.Spec.Ports[1].Port = utils.MetricsPort
+		if c.Spec.MetricsOpts.Enabled {
+			service.Spec.Ports[1].Name = utils.MetricsPortName
+			service.Spec.Ports[1].Port = utils.MetricsPort
+		}
 		return nil
 	})
 }

@@ -58,8 +58,10 @@ func NewStatefulSetSyncer(cli client.Client, c *cluster.Cluster) syncer.Interfac
 		if len(obj.Spec.Template.ObjectMeta.Annotations) == 0 {
 			obj.Spec.Template.ObjectMeta.Annotations = make(map[string]string)
 		}
-		obj.Spec.Template.ObjectMeta.Annotations["prometheus.io/scrape"] = "true"
-		obj.Spec.Template.ObjectMeta.Annotations["prometheus.io/port"] = fmt.Sprintf("%d", utils.MetricsPort)
+		if c.Spec.MetricsOpts.Enabled {
+			obj.Spec.Template.ObjectMeta.Annotations["prometheus.io/scrape"] = "true"
+			obj.Spec.Template.ObjectMeta.Annotations["prometheus.io/port"] = fmt.Sprintf("%d", utils.MetricsPort)
+		}
 
 		err := mergo.Merge(obj.Spec.Template.Spec, ensurePodSpec(c), mergo.WithTransformers(transformers.PodSpec))
 		if err != nil {
@@ -79,11 +81,14 @@ func ensurePodSpec(c *cluster.Cluster) core.PodSpec {
 	initMysql := container.EnsureContainer(utils.ContainerInitMysqlName, c)
 	mysql := container.EnsureContainer(utils.ContainerMysqlName, c)
 	xenon := container.EnsureContainer(utils.ContainerXenonName, c)
-	metrics := container.EnsureContainer(utils.ContainerMetricsName, c)
 	slowlog := container.EnsureContainer(utils.ContainerSlowLogName, c)
+	containers := []core.Container{mysql, xenon, slowlog}
+	if c.Spec.MetricsOpts.Enabled {
+		containers = append(containers, container.EnsureContainer(utils.ContainerMetricsName, c))
+	}
 	return core.PodSpec{
 		InitContainers:     []core.Container{initMysql},
-		Containers:         []core.Container{mysql, xenon, metrics, slowlog},
+		Containers:         containers,
 		Volumes:            c.EnsureVolumes(),
 		SchedulerName:      c.Spec.PodSpec.SchedulerName,
 		ServiceAccountName: c.Spec.PodSpec.ServiceAccountName,

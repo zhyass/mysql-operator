@@ -43,6 +43,8 @@ type ClusterSpec struct {
 	// +optional
 	XenonOpts XenonOpts `json:"xenonOpts,omitempty"`
 
+	MetricsOpts MetricsOpts `json:"metricsOpts,omitempty"`
+
 	// Represents the MySQL version that will be run. The available version can be found here:
 	// This field should be set even if the Image is set to let the operator know which mysql version is running.
 	// Based on this version the operator can take decisions which features can be used.
@@ -108,6 +110,15 @@ type XenonOpts struct {
 	Resources core.ResourceRequirements `json:"resources,omitempty"`
 }
 
+type MetricsOpts struct {
+	// +optional
+	Image string `json:"image,omitempty"`
+
+	Resources core.ResourceRequirements `json:"resources,omitempty"`
+
+	Enabled bool `json:"enabled,omitempty"`
+}
+
 // MysqlConf defines type for extra cluster configs. It's a simple map between
 // string and string.
 type MysqlConf map[string]intstr.IntOrString
@@ -127,9 +138,6 @@ type PodSpec struct {
 
 	// +optional
 	BusyboxImage string `json:"busyboxImage,omitempty"`
-
-	// +optional
-	MetricsImage string `json:"metricsImage,omitempty"`
 
 	// Volumes allows adding extra volumes to the statefulset
 	// +optional
