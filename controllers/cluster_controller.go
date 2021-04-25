@@ -18,7 +18,6 @@ package controllers
 
 import (
 	"context"
-	"reflect"
 
 	"github.com/go-logr/logr"
 	"github.com/presslabs/controller-util/syncer"
@@ -75,13 +74,10 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return reconcile.Result{}, err
 	}
 
-	status := *instance.Status.DeepCopy()
 	defer func() {
-		if !reflect.DeepEqual(status, instance.Status) {
-			sErr := r.Status().Update(ctx, instance.Unwrap())
-			if sErr != nil {
-				log.Error(sErr, "failed to update cluster status")
-			}
+		err = instance.UpdateStatus()
+		if err != nil {
+			log.Error(err, "failed to update cluster status")
 		}
 	}()
 
@@ -93,6 +89,22 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	secretSyncer := clustersyncer.NewSecretSyncer(r.Client, instance)
 	if err = syncer.Sync(ctx, secretSyncer, r.Recorder); err != nil {
 		return reconcile.Result{}, err
+	}
+
+	// run the syncers for services, pdb and statefulset
+	syncers := []syncer.Interface{
+		clustersyncer.NewHeadlessSVCSyncer(r.Client, instance),
+		clustersyncer.NewMasterSVCSyncer(r.Client, instance),
+		clustersyncer.NewHealthySVCSyncer(r.Client, instance),
+		clustersyncer.NewSlaveSVCSyncer(r.Client, instance),
+		clustersyncer.NewStatefulSetSyncer(r.Client, instance),
+	}
+
+	// run the syncers
+	for _, sync := range syncers {
+		if err = syncer.Sync(ctx, sync, r.Recorder); err != nil {
+			return reconcile.Result{}, err
+		}
 	}
 
 	return ctrl.Result{}, nil

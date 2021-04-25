@@ -166,6 +166,14 @@ type Persistence struct {
 	Size string `json:"size,omitempty"`
 }
 
+type ClusterConditionType string
+
+const (
+	ClusterReady ClusterConditionType = "Ready"
+	ClusterInit  ClusterConditionType = "Initializing"
+	ClusterError ClusterConditionType = "Error"
+)
+
 // ClusterCondition defines type for cluster conditions.
 type ClusterCondition struct {
 	// type of cluster condition, values in (\"Ready\")
@@ -180,14 +188,6 @@ type ClusterCondition struct {
 	// Message
 	Message string `json:"message"`
 }
-
-type ClusterConditionType string
-
-const (
-	ClusterReady ClusterConditionType = "Ready"
-	ClusterInit  ClusterConditionType = "Initializing"
-	ClusterError ClusterConditionType = "Error"
-)
 
 // ClusterStatus defines the observed state of Cluster
 type ClusterStatus struct {
