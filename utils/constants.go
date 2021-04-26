@@ -73,10 +73,10 @@ const (
 	StatefulSet ResourceName = "mysql"
 	// ConfigMap is the alias for mysql configs, the config map resource
 	ConfigMap ResourceName = "config-files"
-	// MasterService is the name of the service that points to master node
-	MasterService ResourceName = "master-service"
-	// SlaveService is the name of a service that points healthy slaves (excludes master)
-	SlaveService ResourceName = "slave-service"
+	// LeaderService is the name of the service that points to leader node
+	LeaderService ResourceName = "leader-service"
+	// FollowerService is the name of a service that points healthy followers (excludes leader)
+	FollowerService ResourceName = "follower-service"
 	// HealthyNodesService is the name of a service that contains all healthy nodes
 	HealthyNodesService ResourceName = "healthy-nodes-service"
 	// Secret is the name of the "private" secret that contains operator related credentials

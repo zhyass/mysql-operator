@@ -93,9 +93,9 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	// run the syncers for services, pdb and statefulset
 	syncers := []syncer.Interface{
 		clustersyncer.NewHeadlessSVCSyncer(r.Client, instance),
-		clustersyncer.NewMasterSVCSyncer(r.Client, instance),
+		clustersyncer.NewLeaderSVCSyncer(r.Client, instance),
 		clustersyncer.NewHealthySVCSyncer(r.Client, instance),
-		clustersyncer.NewSlaveSVCSyncer(r.Client, instance),
+		clustersyncer.NewFollowerSVCSyncer(r.Client, instance),
 		clustersyncer.NewStatefulSetSyncer(r.Client, instance),
 	}
 

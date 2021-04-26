@@ -27,20 +27,20 @@ import (
 	"github.com/zhyass/mysql-operator/utils"
 )
 
-// NewSlaveSVCSyncer returns a service syncer.
-func NewSlaveSVCSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface {
+// NewFollowerSVCSyncer returns a service syncer.
+func NewFollowerSVCSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface {
 	service := &core.Service{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
 			Kind:       "Service",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      c.GetNameForResource(utils.SlaveService),
+			Name:      c.GetNameForResource(utils.FollowerService),
 			Namespace: c.Namespace,
 			Labels:    c.GetLabels(),
 		},
 	}
-	return syncer.NewObjectSyncer("SlaveSVC", c.Unwrap(), service, cli, func() error {
+	return syncer.NewObjectSyncer("FollowerSVC", c.Unwrap(), service, cli, func() error {
 		service.Spec.Type = "ClusterIP"
 		service.Spec.Selector = c.GetSelectorLabels()
 		service.Spec.Selector["role"] = "follower"

@@ -195,10 +195,10 @@ func (c *Cluster) GetNameForResource(name utils.ResourceName) string {
 	switch name {
 	case utils.StatefulSet, utils.ConfigMap, utils.HealthyNodesService, utils.HeadlessSVC:
 		return fmt.Sprintf("%s-mysql", c.Name)
-	case utils.MasterService:
-		return fmt.Sprintf("%s-master", c.Name)
-	case utils.SlaveService:
-		return fmt.Sprintf("%s-slave", c.Name)
+	case utils.LeaderService:
+		return fmt.Sprintf("%s-leader", c.Name)
+	case utils.FollowerService:
+		return fmt.Sprintf("%s-follower", c.Name)
 	case utils.Secret:
 		return fmt.Sprintf("%s-secret", c.Name)
 	default:
