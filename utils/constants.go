@@ -81,4 +81,8 @@ const (
 	HealthyNodesService ResourceName = "healthy-nodes-service"
 	// Secret is the name of the "private" secret that contains operator related credentials
 	Secret ResourceName = "secret"
+
+	Role ResourceName = "role"
+
+	RoleBinding ResourceName = "rolebinding"
 )

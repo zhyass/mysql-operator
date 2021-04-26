@@ -75,8 +75,7 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	defer func() {
-		err = instance.UpdateStatus()
-		if err != nil {
+		if err = instance.UpdateStatus(); err != nil {
 			log.Error(err, "failed to update cluster status")
 		}
 	}()

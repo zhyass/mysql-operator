@@ -15,3 +15,13 @@ limitations under the License.
 */
 
 package syncer
+
+import (
+	"github.com/presslabs/controller-util/syncer"
+	"github.com/zhyass/mysql-operator/cluster"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+)
+
+func NewRoleSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface {
+	return nil
+}
