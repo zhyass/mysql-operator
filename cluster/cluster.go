@@ -193,7 +193,7 @@ func (c *Cluster) EnsureVolumeClaimTemplates() []core.PersistentVolumeClaim {
 // GetNameForResource returns the name of a resource from above
 func (c *Cluster) GetNameForResource(name utils.ResourceName) string {
 	switch name {
-	case utils.StatefulSet, utils.ConfigMap, utils.HealthyNodesService, utils.HeadlessSVC:
+	case utils.StatefulSet, utils.ConfigMap, utils.HeadlessSVC:
 		return fmt.Sprintf("%s-mysql", c.Name)
 	case utils.LeaderService:
 		return fmt.Sprintf("%s-leader", c.Name)
@@ -202,6 +202,6 @@ func (c *Cluster) GetNameForResource(name utils.ResourceName) string {
 	case utils.Secret:
 		return fmt.Sprintf("%s-secret", c.Name)
 	default:
-		return fmt.Sprintf("%s-mysql", c.Name)
+		return c.Name
 	}
 }

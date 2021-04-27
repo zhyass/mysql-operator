@@ -19,9 +19,32 @@ package syncer
 import (
 	"github.com/presslabs/controller-util/syncer"
 	"github.com/zhyass/mysql-operator/cluster"
+	"github.com/zhyass/mysql-operator/utils"
+	rbacv1 "k8s.io/api/rbac/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func NewRoleSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface {
-	return nil
+	role := &rbacv1.Role{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "rbac.authorization.k8s.io/v1",
+			Kind:       "Role",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      c.GetNameForResource(utils.Role),
+			Namespace: c.Namespace,
+			Labels:    c.GetLabels(),
+		},
+	}
+	return syncer.NewObjectSyncer("Role", c.Unwrap(), role, cli, func() error {
+		role.Rules = []rbacv1.PolicyRule{
+			{
+				Verbs:     []string{"get", "patch"},
+				APIGroups: []string{""},
+				Resources: []string{"pods"},
+			},
+		}
+		return nil
+	})
 }

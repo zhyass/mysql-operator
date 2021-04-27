@@ -19,9 +19,36 @@ package syncer
 import (
 	"github.com/presslabs/controller-util/syncer"
 	"github.com/zhyass/mysql-operator/cluster"
+	"github.com/zhyass/mysql-operator/utils"
+	rbacv1 "k8s.io/api/rbac/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func NewRoleBindingSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface {
-	return nil
+	roleBinding := &rbacv1.RoleBinding{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "rbac.authorization.k8s.io/v1",
+			Kind:       "RoleBinding",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      c.GetNameForResource(utils.RoleBinding),
+			Namespace: c.Namespace,
+			Labels:    c.GetLabels(),
+		},
+	}
+	return syncer.NewObjectSyncer("Role", c.Unwrap(), roleBinding, cli, func() error {
+		roleBinding.RoleRef = rbacv1.RoleRef{
+			APIGroup: "rbac.authorization.k8s.io",
+			Kind:     "Role",
+			Name:     c.GetNameForResource(utils.Role),
+		}
+		roleBinding.Subjects = []rbacv1.Subject{
+			{
+				Kind: "ServiceAccount",
+				Name: c.Spec.PodSpec.ServiceAccountName,
+			},
+		}
+		return nil
+	})
 }

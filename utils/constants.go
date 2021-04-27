@@ -77,12 +77,12 @@ const (
 	LeaderService ResourceName = "leader-service"
 	// FollowerService is the name of a service that points healthy followers (excludes leader)
 	FollowerService ResourceName = "follower-service"
-	// HealthyNodesService is the name of a service that contains all healthy nodes
-	HealthyNodesService ResourceName = "healthy-nodes-service"
 	// Secret is the name of the "private" secret that contains operator related credentials
 	Secret ResourceName = "secret"
 
 	Role ResourceName = "role"
 
 	RoleBinding ResourceName = "rolebinding"
+
+	ServiceAccount ResourceName = "serviceaccount"
 )

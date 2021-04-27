@@ -18,40 +18,26 @@ package syncer
 
 import (
 	"github.com/presslabs/controller-util/syncer"
-	core "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
 	"github.com/zhyass/mysql-operator/cluster"
 	"github.com/zhyass/mysql-operator/utils"
+	core "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// NewHealthySVCSyncer returns a service syncer.
-func NewHealthySVCSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface {
-	service := &core.Service{
+func NewServiceAccountSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface {
+	serviceAccount := &core.ServiceAccount{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
-			Kind:       "Service",
+			Kind:       "ServiceAccount",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      c.GetNameForResource(utils.HealthyNodesService),
+			Name:      c.GetNameForResource(utils.ServiceAccount),
 			Namespace: c.Namespace,
 			Labels:    c.GetLabels(),
 		},
 	}
-	return syncer.NewObjectSyncer("HealthySVC", c.Unwrap(), service, cli, func() error {
-		service.Spec.Type = "ClusterIP"
-		service.Spec.Selector = c.GetSelectorLabels()
-		service.Spec.Selector["healthy"] = "yes"
-
-		if len(service.Spec.Ports) != 1 {
-			service.Spec.Ports = make([]core.ServicePort, 1)
-		}
-
-		service.Spec.Ports[0].Name = utils.MysqlPortName
-		service.Spec.Ports[0].Port = utils.MysqlPort
-		service.Spec.Ports[0].TargetPort = intstr.FromInt(utils.MysqlPort)
+	return syncer.NewObjectSyncer("ServiceAccount", c.Unwrap(), serviceAccount, cli, func() error {
 		return nil
 	})
 }
