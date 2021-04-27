@@ -31,33 +31,40 @@ type ClusterSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Replicas is the number of pods.
-	// Defaults to 3
 	// +optional
+	// +kubebuilder:validation:Enum=0;2;3;5
+	// +kubebuilder:default:=3
 	Replicas *int32 `json:"replicas,omitempty"`
 
 	// MysqlOpts is the options of MySQL container.
 	// +optional
+	// +kubebuilder:default:={rootPassword: "", user: "qc_usr", password: "Qing@123", database: "qingcloud", initTokudb: true, resources: {limits: {cpu: "1Gi", memory: "500m"}, requests: {cpu: "256Mi", memory: "100m"}}}
 	MysqlOpts MysqlOpts `json:"mysqlOpts,omitempty"`
 
 	// XenonOpts is the options of xenon container.
 	// +optional
+	// +kubebuilder:default:={image: "xenondb/xenon:1.1.5-alpha", admitDefeatHearbeatCount: 5, electionTimeout: 10000, resources: {limits: {cpu: "100m", memory: "256Mi"}, requests: {cpu: "50m", memory: "128Mi"}}}
 	XenonOpts XenonOpts `json:"xenonOpts,omitempty"`
 
+	// +optional
+	// +kubebuilder:default:={image: "prom/mysqld-exporter:v0.12.1", resources: {limits: {cpu: "100m", memory: "128Mi"}, requests: {cpu: "10m", memory: "32Mi"}}, enabled: false}
 	MetricsOpts MetricsOpts `json:"metricsOpts,omitempty"`
 
 	// Represents the MySQL version that will be run. The available version can be found here:
 	// This field should be set even if the Image is set to let the operator know which mysql version is running.
 	// Based on this version the operator can take decisions which features can be used.
-	// Defaults to 5.7
 	// +optional
+	// +kubebuilder:default:="5.7"
 	MysqlVersion string `json:"mysqlVersion,omitempty"`
 
 	// Pod extra specification
 	// +optional
+	// +kubebuilder:default:={imagePullPolicy: "IfNotPresent", resources: {limits: {cpu: "100m", memory: "128Mi"}, requests: {cpu: "10m", memory: "32Mi"}}, busyboxImage: "busybox:1.32"}
 	PodSpec PodSpec `json:"podSpec,omitempty"`
 
 	// PVC extra specifiaction
 	// +optional
+	// +kubebuilder:default:={enabled: true, accessModes: ["ReadWriteOnce"], size: "10Gi"}
 	Persistence Persistence `json:"persistence,omitempty"`
 }
 
@@ -65,31 +72,35 @@ type ClusterSpec struct {
 type MysqlOpts struct {
 	// Password for the root user.
 	// +optional
+	// +kubebuilder:default:=""
 	RootPassword string `json:"rootPassword,omitempty"`
 
 	// Username of new user to create.
-	// Defaults to qc_usr
 	// +optional
+	// +kubebuilder:default:="qc_usr"
 	User string `json:"user,omitempty"`
 
 	// Password for the new user.
-	// Defaults to Qing@123
 	// +optional
+	// +kubebuilder:default:="Qing@123"
 	Password string `json:"password,omitempty"`
 
 	// Name for new database to create.
-	// Defaults to qingcloud
 	// +optional
+	// +kubebuilder:default:="qingcloud"
 	Database string `json:"database,omitempty"`
 
 	// Install tokudb engine.
 	// +optional
+	// +kubebuilder:default:=true
 	InitTokudb bool `json:"initTokudb,omitempty"`
 
 	// A map[string]string that will be passed to my.cnf file.
 	// +optional
 	MysqlConf MysqlConf `json:"mysqlConf,omitempty"`
 
+	// +optional
+	// +kubebuilder:default:={limits: {cpu: "1Gi", memory: "500m"}, requests: {cpu: "256Mi", memory: "100m"}}
 	Resources core.ResourceRequirements `json:"resources,omitempty"`
 }
 
@@ -97,25 +108,35 @@ type MysqlOpts struct {
 type XenonOpts struct {
 	// To specify the image that will be used for xenon container.
 	// +optional
+	// +kubebuilder:default:="xenondb/xenon:1.1.5-alpha"
 	Image string `json:"image,omitempty"`
 
 	// High available component admit defeat heartbeat count.
 	// +optional
+	// +kubebuilder:default:=5
 	AdmitDefeatHearbeatCount *int32 `json:"admitDefeatHearbeatCount,omitempty"`
 
 	// High available component election timeout. The unit is millisecond.
 	// +optional
+	// +kubebuilder:default:=10000
 	ElectionTimeout *int32 `json:"electionTimeout,omitempty"`
 
+	// +optional
+	// +kubebuilder:default:={limits: {cpu: "100m", memory: "256Mi"}, requests: {cpu: "50m", memory: "128Mi"}}
 	Resources core.ResourceRequirements `json:"resources,omitempty"`
 }
 
 type MetricsOpts struct {
 	// +optional
+	// +kubebuilder:default:="prom/mysqld-exporter:v0.12.1"
 	Image string `json:"image,omitempty"`
 
+	// +optional
+	// +kubebuilder:default:={limits: {cpu: "100m", memory: "128Mi"}, requests: {cpu: "10m", memory: "32Mi"}}
 	Resources core.ResourceRequirements `json:"resources,omitempty"`
 
+	// +optional
+	// +kubebuilder:default:=false
 	Enabled bool `json:"enabled,omitempty"`
 }
 
@@ -125,37 +146,38 @@ type MysqlConf map[string]intstr.IntOrString
 
 // PodSpec defines type for configure cluster pod spec.
 type PodSpec struct {
+	// +kubebuilder:validation:Enum=Always;IfNotPresent;Never
+	// +kubebuilder:default:="IfNotPresent"
 	ImagePullPolicy core.PullPolicy `json:"imagePullPolicy,omitempty"`
 
-	Labels             map[string]string         `json:"labels,omitempty"`
-	Annotations        map[string]string         `json:"annotations,omitempty"`
-	Affinity           *core.Affinity            `json:"affinity,omitempty"`
-	PriorityClassName  string                    `json:"priorityClassName,omitempty"`
-	Tolerations        []core.Toleration         `json:"tolerations,omitempty"`
-	SchedulerName      string                    `json:"schedulerName,omitempty"`
-	ServiceAccountName string                    `json:"serviceAccountName,omitempty"`
-	Resources          core.ResourceRequirements `json:"resources,omitempty"`
+	Labels             map[string]string `json:"labels,omitempty"`
+	Annotations        map[string]string `json:"annotations,omitempty"`
+	Affinity           *core.Affinity    `json:"affinity,omitempty"`
+	PriorityClassName  string            `json:"priorityClassName,omitempty"`
+	Tolerations        []core.Toleration `json:"tolerations,omitempty"`
+	SchedulerName      string            `json:"schedulerName,omitempty"`
+	ServiceAccountName string            `json:"serviceAccountName,omitempty"`
 
 	// +optional
+	// +kubebuilder:default:={limits: {cpu: "100m", memory: "128Mi"}, requests: {cpu: "10m", memory: "32Mi"}}
+	Resources core.ResourceRequirements `json:"resources,omitempty"`
+
+	// +optional
+	// +kubebuilder:default:="busybox:1.32"
 	BusyboxImage string `json:"busyboxImage,omitempty"`
-
-	// Volumes allows adding extra volumes to the statefulset
-	// +optional
-	Volumes []core.Volume `json:"volumes,omitempty"`
-
-	// VolumesMounts allows mounting extra volumes to the mysql container
-	// +optional
-	VolumeMounts []core.VolumeMount `json:"volumeMounts,omitempty"`
 }
 
 // Persistence is the desired spec for storing mysql data. Only one of its
 // members may be specified.
 type Persistence struct {
+	// +optional
+	// +kubebuilder:default:=true
 	Enabled bool `json:"enabled,omitempty"`
 
 	// AccessModes contains the desired access modes the volume should have.
 	// More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#access-modes-1
 	// +optional
+	// +kubebuilder:default:=["ReadWriteOnce"]
 	AccessModes []core.PersistentVolumeAccessMode `json:"accessModes,omitempty"`
 
 	// Name of the StorageClass required by the claim.
@@ -163,6 +185,8 @@ type Persistence struct {
 	// +optional
 	StorageClass string `json:"storageClass,omitempty"`
 
+	// +optional
+	// +kubebuilder:default:="10Gi"
 	Size string `json:"size,omitempty"`
 }
 
