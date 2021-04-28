@@ -17,7 +17,10 @@ limitations under the License.
 package v1
 
 import (
+	"math"
+
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -25,6 +28,14 @@ import (
 
 // log is for logging in this package.
 var clusterlog = logf.Log.WithName("cluster-resource")
+
+// nolint: megacheck, deadcode, varcheck
+const (
+	_        = iota // ignore first value by assigning to blank identifier
+	kb int64 = 1 << (10 * iota)
+	mb
+	gb
+)
 
 func (r *Cluster) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
@@ -43,6 +54,11 @@ func (r *Cluster) Default() {
 	clusterlog.Info("default", "name", r.Name)
 
 	// TODO(user): fill in your defaulting logic.
+	if len(r.Spec.MysqlOpts.MysqlConf) == 0 {
+		r.Spec.MysqlOpts.MysqlConf = make(MysqlConf)
+	}
+
+	r.setInnodbBufferPoolConf()
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
@@ -72,4 +88,44 @@ func (r *Cluster) ValidateDelete() error {
 
 	// TODO(user): fill in your validation logic upon object deletion.
 	return nil
+}
+
+// set innodb_buffer_pool_size.
+func (r *Cluster) setInnodbBufferPoolConf() {
+	var defaultSize, maxSize, innodbBufferPoolSize int64
+	innodbBufferPoolSize = 128 * mb
+	conf, ok := r.Spec.MysqlOpts.MysqlConf["innodb_buffer_pool_size"]
+	mem := r.Spec.MysqlOpts.Resources.Requests.Memory().Value()
+	cpu := r.Spec.PodSpec.Resources.Limits.Cpu().MilliValue()
+	if mem <= 1*gb {
+		defaultSize = int64(0.45 * float64(mem))
+		maxSize = int64(0.6 * float64(mem))
+	} else {
+		defaultSize = int64(0.6 * float64(mem))
+		maxSize = int64(0.8 * float64(mem))
+	}
+
+	if !ok {
+		innodbBufferPoolSize = max(defaultSize, innodbBufferPoolSize)
+	} else {
+		innodbBufferPoolSize = min(max(int64(conf.IntVal), innodbBufferPoolSize), maxSize)
+	}
+
+	instances := math.Max(math.Min(math.Ceil(float64(cpu)/float64(1000)), math.Floor(float64(innodbBufferPoolSize)/float64(gb))), 1)
+	r.Spec.MysqlOpts.MysqlConf["innodb_buffer_pool_size"] = intstr.FromInt(int(innodbBufferPoolSize))
+	r.Spec.MysqlOpts.MysqlConf["innodb_buffer_pool_instances"] = intstr.FromInt(int(instances))
+}
+
+func min(a, b int64) int64 {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func max(a, b int64) int64 {
+	if a > b {
+		return a
+	}
+	return b
 }

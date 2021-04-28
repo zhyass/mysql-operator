@@ -38,7 +38,7 @@ type ClusterSpec struct {
 
 	// MysqlOpts is the options of MySQL container.
 	// +optional
-	// +kubebuilder:default:={rootPassword: "", user: "qc_usr", password: "Qing@123", database: "qingcloud", initTokudb: true, resources: {limits: {cpu: "1Gi", memory: "500m"}, requests: {cpu: "256Mi", memory: "100m"}}}
+	// +kubebuilder:default:={rootPassword: "", user: "qc_usr", password: "Qing@123", database: "qingcloud", initTokudb: true, resources: {limits: {cpu: "500m", memory: "1Gi"}, requests: {cpu: "100m", memory: "256Mi"}}}
 	MysqlOpts MysqlOpts `json:"mysqlOpts,omitempty"`
 
 	// XenonOpts is the options of xenon container.
@@ -59,7 +59,7 @@ type ClusterSpec struct {
 
 	// Pod extra specification
 	// +optional
-	// +kubebuilder:default:={imagePullPolicy: "IfNotPresent", resources: {limits: {cpu: "100m", memory: "128Mi"}, requests: {cpu: "10m", memory: "32Mi"}}, busyboxImage: "busybox:1.32"}
+	// +kubebuilder:default:={imagePullPolicy: "IfNotPresent", serviceAccountName: "mysql", resources: {limits: {cpu: "100m", memory: "128Mi"}, requests: {cpu: "10m", memory: "32Mi"}}, busyboxImage: "busybox:1.32"}
 	PodSpec PodSpec `json:"podSpec,omitempty"`
 
 	// PVC extra specifiaction
@@ -100,7 +100,7 @@ type MysqlOpts struct {
 	MysqlConf MysqlConf `json:"mysqlConf,omitempty"`
 
 	// +optional
-	// +kubebuilder:default:={limits: {cpu: "1Gi", memory: "500m"}, requests: {cpu: "256Mi", memory: "100m"}}
+	// +kubebuilder:default:={limits: {cpu: "500m", memory: "1Gi"}, requests: {cpu: "100m", memory: "256Mi"}}
 	Resources core.ResourceRequirements `json:"resources,omitempty"`
 }
 
@@ -150,13 +150,18 @@ type PodSpec struct {
 	// +kubebuilder:default:="IfNotPresent"
 	ImagePullPolicy core.PullPolicy `json:"imagePullPolicy,omitempty"`
 
-	Labels             map[string]string `json:"labels,omitempty"`
-	Annotations        map[string]string `json:"annotations,omitempty"`
-	Affinity           *core.Affinity    `json:"affinity,omitempty"`
-	PriorityClassName  string            `json:"priorityClassName,omitempty"`
-	Tolerations        []core.Toleration `json:"tolerations,omitempty"`
-	SchedulerName      string            `json:"schedulerName,omitempty"`
-	ServiceAccountName string            `json:"serviceAccountName,omitempty"`
+	Labels            map[string]string `json:"labels,omitempty"`
+	Annotations       map[string]string `json:"annotations,omitempty"`
+	Affinity          *core.Affinity    `json:"affinity,omitempty"`
+	PriorityClassName string            `json:"priorityClassName,omitempty"`
+	Tolerations       []core.Toleration `json:"tolerations,omitempty"`
+	SchedulerName     string            `json:"schedulerName,omitempty"`
+
+	// +optional
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=63
+	// +kubebuilder:default:="mysql"
+	ServiceAccountName string `json:"serviceAccountName,omitempty"`
 
 	// +optional
 	// +kubebuilder:default:={limits: {cpu: "100m", memory: "128Mi"}, requests: {cpu: "10m", memory: "32Mi"}}

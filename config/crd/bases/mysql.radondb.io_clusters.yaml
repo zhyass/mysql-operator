@@ -110,11 +110,11 @@ spec:
                   password: Qing@123
                   resources:
                     limits:
-                      cpu: 1Gi
-                      memory: 500m
+                      cpu: 500m
+                      memory: 1Gi
                     requests:
-                      cpu: 256Mi
-                      memory: 100m
+                      cpu: 100m
+                      memory: 256Mi
                   rootPassword: ""
                   user: qc_usr
                 description: MysqlOpts is the options of MySQL container.
@@ -143,11 +143,11 @@ spec:
                   resources:
                     default:
                       limits:
-                        cpu: 1Gi
-                        memory: 500m
+                        cpu: 500m
+                        memory: 1Gi
                       requests:
-                        cpu: 256Mi
-                        memory: 100m
+                        cpu: 100m
+                        memory: 256Mi
                     description: ResourceRequirements describes the compute resource
                       requirements.
                     properties:
@@ -227,6 +227,7 @@ spec:
                     requests:
                       cpu: 10m
                       memory: 32Mi
+                  serviceAccountName: mysql
                 description: Pod extra specification
                 properties:
                   affinity:
@@ -905,6 +906,9 @@ spec:
                   schedulerName:
                     type: string
                   serviceAccountName:
+                    default: mysql
+                    maxLength: 63
+                    minLength: 1
                     type: string
                   tolerations:
                     items:
