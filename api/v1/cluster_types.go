@@ -64,7 +64,7 @@ type ClusterSpec struct {
 
 	// PVC extra specifiaction
 	// +optional
-	// +kubebuilder:default:={enabled: true, accessModes: ["ReadWriteOnce"], size: "10Gi"}
+	// +kubebuilder:default:={enabled: true, accessModes: {"ReadWriteOnce"}, size: "10Gi"}
 	Persistence Persistence `json:"persistence,omitempty"`
 }
 
@@ -182,7 +182,7 @@ type Persistence struct {
 	// AccessModes contains the desired access modes the volume should have.
 	// More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#access-modes-1
 	// +optional
-	// +kubebuilder:default:=["ReadWriteOnce"]
+	// +kubebuilder:default:={"ReadWriteOnce"}
 	AccessModes []core.PersistentVolumeAccessMode `json:"accessModes,omitempty"`
 
 	// Name of the StorageClass required by the claim.
