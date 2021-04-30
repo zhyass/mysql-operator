@@ -141,5 +141,10 @@ func (c *xenon) getReadinessProbe() *core.Probe {
 }
 
 func (c *xenon) getVolumeMounts() []core.VolumeMount {
-	return nil
+	return []core.VolumeMount{
+		{
+			Name:      utils.ScriptsVolumeName,
+			MountPath: "/scripts",
+		},
+	}
 }

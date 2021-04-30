@@ -61,6 +61,7 @@ const (
 	LogsVolumeName    = "logs"
 	DataVolumeName    = "data"
 	SysVolumeName     = "host-sys"
+	ScriptsVolumeName = "scripts"
 )
 
 // ResourceName is the type for aliasing resources that will be created.

@@ -153,6 +153,12 @@ func (c *Cluster) EnsureVolumes() []core.Volume {
 			},
 		},
 		core.Volume{
+			Name: utils.ScriptsVolumeName,
+			VolumeSource: core.VolumeSource{
+				EmptyDir: &core.EmptyDirVolumeSource{},
+			},
+		},
+		core.Volume{
 			Name: utils.SysVolumeName,
 			VolumeSource: core.VolumeSource{
 				HostPath: &core.HostPathVolumeSource{

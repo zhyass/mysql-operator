@@ -45,9 +45,14 @@ ordinal=$(echo $(hostname) | tr -cd "[0-9]")
 cat /mnt/config-map/server-id.cnf | sed s/@@SERVER_ID@@/$((100 + $ordinal))/g > /mnt/conf.d/server-id.cnf
 # Copy appropriate conf.d files from config-map to config mount.
 cp -f /mnt/config-map/node.cnf /mnt/conf.d/
-# remove lost+found.
-rm -rf /mnt/data/lost+found
+cp -f /mnt/config-map/*.sh /mnt/scripts/
+chmod +x /mnt/scripts/*
 `
+	if c.Spec.Persistence.Enabled {
+		str = fmt.Sprintf(`%s# remove lost+found.
+rm -rf /mnt/data/lost+found
+`, str)
+	}
 	if c.Spec.MysqlOpts.InitTokudb {
 		str = fmt.Sprintf(`%s# For install tokudb.
 printf '\nloose_tokudb_directio = ON\n' >> /mnt/conf.d/node.cnf
@@ -98,6 +103,10 @@ func (c *initMysql) getVolumeMounts() []core.VolumeMount {
 		{
 			Name:      utils.SysVolumeName,
 			MountPath: "/host-sys",
+		},
+		{
+			Name:      utils.ScriptsVolumeName,
+			MountPath: "/mnt/scripts",
 		},
 	}
 }

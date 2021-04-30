@@ -58,7 +58,28 @@ func (r *Cluster) Default() {
 		r.Spec.MysqlOpts.MysqlConf = make(MysqlConf)
 	}
 
-	r.setInnodbBufferPoolConf()
+	var defaultSize, maxSize, innodbBufferPoolSize int64
+	innodbBufferPoolSize = 128 * mb
+	conf, ok := r.Spec.MysqlOpts.MysqlConf["innodb_buffer_pool_size"]
+	mem := r.Spec.MysqlOpts.Resources.Requests.Memory().Value()
+	cpu := r.Spec.PodSpec.Resources.Limits.Cpu().MilliValue()
+	if mem <= 1*gb {
+		defaultSize = int64(0.45 * float64(mem))
+		maxSize = int64(0.6 * float64(mem))
+	} else {
+		defaultSize = int64(0.6 * float64(mem))
+		maxSize = int64(0.8 * float64(mem))
+	}
+
+	if !ok {
+		innodbBufferPoolSize = max(defaultSize, innodbBufferPoolSize)
+	} else {
+		innodbBufferPoolSize = min(max(int64(conf.IntVal), innodbBufferPoolSize), maxSize)
+	}
+
+	instances := math.Max(math.Min(math.Ceil(float64(cpu)/float64(1000)), math.Floor(float64(innodbBufferPoolSize)/float64(gb))), 1)
+	r.Spec.MysqlOpts.MysqlConf["innodb_buffer_pool_size"] = intstr.FromInt(int(innodbBufferPoolSize))
+	r.Spec.MysqlOpts.MysqlConf["innodb_buffer_pool_instances"] = intstr.FromInt(int(instances))
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
@@ -88,32 +109,6 @@ func (r *Cluster) ValidateDelete() error {
 
 	// TODO(user): fill in your validation logic upon object deletion.
 	return nil
-}
-
-// set innodb_buffer_pool_size.
-func (r *Cluster) setInnodbBufferPoolConf() {
-	var defaultSize, maxSize, innodbBufferPoolSize int64
-	innodbBufferPoolSize = 128 * mb
-	conf, ok := r.Spec.MysqlOpts.MysqlConf["innodb_buffer_pool_size"]
-	mem := r.Spec.MysqlOpts.Resources.Requests.Memory().Value()
-	cpu := r.Spec.PodSpec.Resources.Limits.Cpu().MilliValue()
-	if mem <= 1*gb {
-		defaultSize = int64(0.45 * float64(mem))
-		maxSize = int64(0.6 * float64(mem))
-	} else {
-		defaultSize = int64(0.6 * float64(mem))
-		maxSize = int64(0.8 * float64(mem))
-	}
-
-	if !ok {
-		innodbBufferPoolSize = max(defaultSize, innodbBufferPoolSize)
-	} else {
-		innodbBufferPoolSize = min(max(int64(conf.IntVal), innodbBufferPoolSize), maxSize)
-	}
-
-	instances := math.Max(math.Min(math.Ceil(float64(cpu)/float64(1000)), math.Floor(float64(innodbBufferPoolSize)/float64(gb))), 1)
-	r.Spec.MysqlOpts.MysqlConf["innodb_buffer_pool_size"] = intstr.FromInt(int(innodbBufferPoolSize))
-	r.Spec.MysqlOpts.MysqlConf["innodb_buffer_pool_instances"] = intstr.FromInt(int(instances))
 }
 
 func min(a, b int64) int64 {

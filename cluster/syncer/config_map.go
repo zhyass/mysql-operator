@@ -53,8 +53,10 @@ func NewConfigMapSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface 
 		}
 
 		cm.Data = map[string]string{
-			"node.cnf":   data,
-			"xenon.json": buildXenonConf(c),
+			"node.cnf":        data,
+			"xenon.json":      buildXenonConf(c),
+			"leader-start.sh": buildLeaderStart(c),
+			"leader-stop.sh":  buildLeaderStop(c),
 		}
 
 		return nil
@@ -169,10 +171,28 @@ func buildXenonConf(c *cluster.Cluster) string {
 		"admit-defeat-hearbeat-count": %d,
 		"heartbeat-timeout": %d,
 		"meta-datadir": "/var/lib/xenon/",
+		"leader-start-command": "/scripts/leader-start.sh",
+		"leader-stop-command": "/scripts/leader-stop.sh",
 		"semi-sync-degrade": true,
 		"purge-binlog-disabled": true,
 		"super-idle": false
 	}
 }
 `, host, utils.XenonPort, requestTimeout, pingTimeout, version, electionTimeout, admitDefeatHearbeatCount, heartbeatTimeout)
+}
+
+func buildLeaderStart(c *cluster.Cluster) string {
+	return fmt.Sprintf(`#!/usr/bin/env bash
+curl -X PATCH -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" -H "Content-Type: application/json-patch+json" \
+--cacert /var/run/secrets/kubernetes.io/serviceaccount/ca.crt https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/api/v1/namespaces/%s/pods/$HOSTNAME \
+-d '[{"op": "replace", "path": "/metadata/labels/role", "value": "leader"}]'
+`, c.Namespace)
+}
+
+func buildLeaderStop(c *cluster.Cluster) string {
+	return fmt.Sprintf(`#!/usr/bin/env bash
+curl -X PATCH -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" -H "Content-Type: application/json-patch+json" \
+--cacert /var/run/secrets/kubernetes.io/serviceaccount/ca.crt https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/api/v1/namespaces/%s/pods/$HOSTNAME \
+-d '[{"op": "replace", "path": "/metadata/labels/role", "value": "follower"}]'
+`, c.Namespace)
 }
