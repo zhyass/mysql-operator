@@ -146,5 +146,10 @@ func (c *xenon) getVolumeMounts() []core.VolumeMount {
 			Name:      utils.ScriptsVolumeName,
 			MountPath: "/scripts",
 		},
+		{
+			Name:      utils.ConfMapVolumeName,
+			MountPath: "/etc/xenon/xenon.json",
+			SubPath:   "xenon.json",
+		},
 	}
 }
