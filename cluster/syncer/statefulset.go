@@ -63,7 +63,7 @@ func NewStatefulSetSyncer(cli client.Client, c *cluster.Cluster) syncer.Interfac
 			obj.Spec.Template.ObjectMeta.Annotations["prometheus.io/port"] = fmt.Sprintf("%d", utils.MetricsPort)
 		}
 
-		err := mergo.Merge(obj.Spec.Template.Spec, ensurePodSpec(c), mergo.WithTransformers(transformers.PodSpec))
+		err := mergo.Merge(&obj.Spec.Template.Spec, ensurePodSpec(c), mergo.WithTransformers(transformers.PodSpec))
 		if err != nil {
 			return err
 		}
