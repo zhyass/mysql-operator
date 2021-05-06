@@ -21,6 +21,7 @@ import (
 	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/zhyass/mysql-operator/cluster"
@@ -55,15 +56,20 @@ func NewHeadlessSVCSyncer(cli client.Client, c *cluster.Cluster) syncer.Interfac
 		// Use `publishNotReadyAddresses` to be able to access pods even if the pod is not ready.
 		service.Spec.PublishNotReadyAddresses = true
 
-		if len(service.Spec.Ports) != 2 {
-			service.Spec.Ports = make([]core.ServicePort, 2)
+		service.Spec.Ports = []core.ServicePort{
+			{
+				Name:       utils.MysqlPortName,
+				Port:       utils.MysqlPort,
+				TargetPort: intstr.FromInt(utils.MysqlPort),
+			},
 		}
 
-		service.Spec.Ports[0].Name = utils.MysqlPortName
-		service.Spec.Ports[0].Port = utils.MysqlPort
 		if c.Spec.MetricsOpts.Enabled {
-			service.Spec.Ports[1].Name = utils.MetricsPortName
-			service.Spec.Ports[1].Port = utils.MetricsPort
+			service.Spec.Ports = append(service.Spec.Ports, core.ServicePort{
+				Name:       utils.MetricsPortName,
+				Port:       utils.MetricsPort,
+				TargetPort: intstr.FromInt(utils.MetricsPort),
+			})
 		}
 		return nil
 	})
