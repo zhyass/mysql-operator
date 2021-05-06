@@ -1,7 +1,10 @@
 apiVersion: mysql.radondb.io/v1
 kind: Cluster
 metadata:
-  name: cluster-sample
+  name: cluster
 spec:
   # Add fields here
-  foo: bar
+  replicas: 3
+
+  xenonOpts:
+    image: zhyass/xenon:1.1.5
