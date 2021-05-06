@@ -45,7 +45,9 @@ type ClusterReconciler struct {
 //+kubebuilder:rbac:groups=mysql.radondb.io,resources=clusters,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=mysql.radondb.io,resources=clusters/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=mysql.radondb.io,resources=clusters/finalizers,verbs=update
-// +kubebuilder:rbac:groups=core,resources=configmaps;secrets;services;events;pods;persistentvolumeclaims,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=core,resources=configmaps;secrets;services;pods;persistentvolumeclaims,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=core,resources=events,verbs=get;create;patch
+// +kubebuilder:rbac:groups=core,resources=serviceaccounts,verbs=get;list;watch;create;update
 // +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=roles;rolebindings,verbs=get;list;watch;create;update
 // +kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=get;list;watch;create;update;patch;delete
 

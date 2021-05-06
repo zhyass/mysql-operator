@@ -34,7 +34,6 @@ rules:
   - ""
   resources:
   - configmaps
-  - events
   - persistentvolumeclaims
   - pods
   - secrets
@@ -45,6 +44,24 @@ rules:
   - get
   - list
   - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - get
+  - patch
+- apiGroups:
+  - ""
+  resources:
+  - serviceaccounts
+  verbs:
+  - create
+  - get
+  - list
   - update
   - watch
 - apiGroups:
