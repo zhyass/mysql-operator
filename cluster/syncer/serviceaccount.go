@@ -19,7 +19,6 @@ package syncer
 import (
 	"github.com/presslabs/controller-util/syncer"
 	"github.com/zhyass/mysql-operator/cluster"
-	"github.com/zhyass/mysql-operator/utils"
 	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -32,7 +31,7 @@ func NewServiceAccountSyncer(cli client.Client, c *cluster.Cluster) syncer.Inter
 			Kind:       "ServiceAccount",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      c.GetNameForResource(utils.ServiceAccount),
+			Name:      c.Spec.PodSpec.ServiceAccountName,
 			Namespace: c.Namespace,
 			Labels:    c.GetLabels(),
 		},

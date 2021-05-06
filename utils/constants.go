@@ -84,6 +84,4 @@ const (
 	Role ResourceName = "role"
 
 	RoleBinding ResourceName = "rolebinding"
-
-	ServiceAccount ResourceName = "serviceaccount"
 )
