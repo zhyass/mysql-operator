@@ -14,23 +14,4 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package container
-
-import (
-	core "k8s.io/api/core/v1"
-)
-
-func getEnvVarFromSecret(sctName, name, key string, opt bool) core.EnvVar {
-	return core.EnvVar{
-		Name: name,
-		ValueFrom: &core.EnvVarSource{
-			SecretKeyRef: &core.SecretKeySelector{
-				LocalObjectReference: core.LocalObjectReference{
-					Name: sctName,
-				},
-				Key:      key,
-				Optional: &opt,
-			},
-		},
-	}
-}
+package main
