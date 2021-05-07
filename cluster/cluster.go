@@ -175,10 +175,12 @@ func (c *Cluster) EnsureVolumeClaimTemplates() []core.PersistentVolumeClaim {
 		return nil
 	}
 
-	storageClassName := ""
-	if c.Spec.Persistence.StorageClass != "" {
-		storageClassName = c.Spec.Persistence.StorageClass
+	if c.Spec.Persistence.StorageClass != nil {
+		if *c.Spec.Persistence.StorageClass == "-" {
+			*c.Spec.Persistence.StorageClass = ""
+		}
 	}
+
 	data := core.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: utils.DataVolumeName,
@@ -190,7 +192,7 @@ func (c *Cluster) EnsureVolumeClaimTemplates() []core.PersistentVolumeClaim {
 					core.ResourceStorage: resource.MustParse(c.Spec.Persistence.Size),
 				},
 			},
-			StorageClassName: &storageClassName,
+			StorageClassName: c.Spec.Persistence.StorageClass,
 		},
 	}
 	return []core.PersistentVolumeClaim{data}

@@ -188,7 +188,7 @@ type Persistence struct {
 	// Name of the StorageClass required by the claim.
 	// More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#class-1
 	// +optional
-	StorageClass string `json:"storageClass,omitempty"`
+	StorageClass *string `json:"storageClass,omitempty"`
 
 	// +optional
 	// +kubebuilder:default:="10Gi"
