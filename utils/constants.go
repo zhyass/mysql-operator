@@ -38,7 +38,7 @@ var (
 
 	// MysqlImageVersions is a map of supported mysql version and their image
 	MysqlImageVersions = map[string]string{
-		"5.7.33": "kryptondb/percona:5.7.33",
+		"5.7.33": "xenondb/percona:5.7.33",
 	}
 )
 
