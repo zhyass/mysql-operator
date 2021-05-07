@@ -68,8 +68,8 @@ RUN set -ex; \
 
 VOLUME ["/var/lib/mysql", "/var/log/mysql"]
 
-COPY ./hack/docker/mysql/mysql-entry.sh /docker-entrypoint.sh
-COPY --chown=mysql:mysql ./hack/docker/mysql/my.cnf /etc/mysql/my.cnf
+COPY mysql-entry.sh /docker-entrypoint.sh
+COPY --chown=mysql:mysql my.cnf /etc/mysql/my.cnf
 ENTRYPOINT ["/docker-entrypoint.sh"]
 
 EXPOSE 3306

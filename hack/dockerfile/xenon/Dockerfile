@@ -31,7 +31,7 @@ RUN set -ex \
 
 COPY --from=builder --chown=999:999 /go/src/github.com/radondb/xenon/bin/xenon /usr/local/bin/xenon
 COPY --from=builder --chown=999:999 /go/src/github.com/radondb/xenon/bin/xenoncli /usr/local/bin/xenoncli
-COPY ./hack/docker/xenon/xenon-entry.sh /usr/local/bin/docker-entrypoint
+COPY xenon-entry.sh /usr/local/bin/docker-entrypoint
 
 USER 999
 WORKDIR /
