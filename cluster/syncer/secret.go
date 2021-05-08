@@ -55,7 +55,7 @@ func NewSecretSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface {
 			}
 		}
 
-		secret.Data["replication-user"] = []byte("qc_repl")
+		secret.Data["replication-user"] = []byte(utils.ReplicationUser)
 		if err := addRandomPassword(secret.Data, "replication-password"); err != nil {
 			return err
 		}

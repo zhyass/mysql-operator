@@ -15,3 +15,40 @@ limitations under the License.
 */
 
 package main
+
+import (
+	"os"
+
+	"github.com/spf13/cobra"
+	"github.com/zhyass/mysql-operator/sidecar"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
+)
+
+const (
+	sidecarName  = "sidecar"
+	sidecarShort = "A simple helper for mysql operator."
+)
+
+var (
+	log = logf.Log.WithName("sidecar")
+	cmd = &cobra.Command{
+		Use:   sidecarName,
+		Short: sidecarShort,
+		Run: func(cmd *cobra.Command, args []string) {
+			log.Info("run the sidecar, see help section")
+			os.Exit(1)
+		},
+	}
+)
+
+func main() {
+	cfg := sidecar.NewConfig()
+
+	initCmd := sidecar.NewInitCommand(cfg)
+	cmd.AddCommand(initCmd)
+
+	if err := cmd.Execute(); err != nil {
+		log.Error(err, "failed to execute command", "cmd", cmd)
+		os.Exit(1)
+	}
+}

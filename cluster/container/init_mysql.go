@@ -17,7 +17,7 @@ limitations under the License.
 package container
 
 import (
-	"fmt"
+	"strconv"
 
 	"github.com/zhyass/mysql-operator/cluster"
 	"github.com/zhyass/mysql-operator/utils"
@@ -35,35 +35,58 @@ func (c *initMysql) getName() string {
 }
 
 func (c *initMysql) getImage() string {
-	return c.Spec.PodSpec.BusyboxImage
+	return c.Spec.PodSpec.SidecarImage
 }
 
 func (c *initMysql) getCommand() []string {
-	str := `# Generate mysql server-id from pod ordinal index.
-ordinal=$(echo $(hostname) | tr -cd "[0-9]")
-# Copy server-id.conf adding offset to avoid reserved server-id=0 value.
-cat /mnt/config-map/server-id.cnf | sed s/@@SERVER_ID@@/$((100 + $ordinal))/g > /mnt/conf.d/server-id.cnf
-# Copy appropriate conf.d files from config-map to config mount.
-cp -f /mnt/config-map/node.cnf /mnt/conf.d/
-cp -f /mnt/config-map/*.sh /mnt/scripts/
-chmod +x /mnt/scripts/*
-`
-	if c.Spec.Persistence.Enabled {
-		str = fmt.Sprintf(`%s# remove lost+found.
-rm -rf /mnt/data/lost+found
-`, str)
-	}
-	if c.Spec.MysqlOpts.InitTokudb {
-		str = fmt.Sprintf(`%s# For install tokudb.
-printf '\nloose_tokudb_directio = ON\n' >> /mnt/conf.d/node.cnf
-echo never > /host-sys/kernel/mm/transparent_hugepage/enabled
-`, str)
-	}
-	return []string{"sh", "-c", str}
+	return []string{"sidecar", "init"}
 }
 
 func (c *initMysql) getEnvVars() []core.EnvVar {
-	return nil
+	sctName := c.GetNameForResource(utils.Secret)
+	envs := []core.EnvVar{
+		{
+			Name: "POD_HOSTNAME",
+			ValueFrom: &core.EnvVarSource{
+				FieldRef: &core.ObjectFieldSelector{
+					APIVersion: "v1",
+					FieldPath:  "metadata.name",
+				},
+			},
+		},
+		{
+			Name:  "NAMESPACE",
+			Value: c.Namespace,
+		},
+		{
+			Name:  "SERVICE_NAME",
+			Value: c.GetNameForResource(utils.HeadlessSVC),
+		},
+		{
+			Name:  "ADMIT_DEFEAT_HEARBEAT_COUNT",
+			Value: strconv.Itoa(int(*c.Spec.XenonOpts.AdmitDefeatHearbeatCount)),
+		},
+		{
+			Name:  "ELECTION_TIMEOUT",
+			Value: strconv.Itoa(int(*c.Spec.XenonOpts.ElectionTimeout)),
+		},
+		{
+			Name:  "MY_MYSQL_VERSION",
+			Value: c.GetMySQLVersion(),
+		},
+		getEnvVarFromSecret(sctName, "MYSQL_ROOT_PASSWORD", "root-password", false),
+		getEnvVarFromSecret(sctName, "MYSQL_REPL_USER", "replication-user", true),
+		getEnvVarFromSecret(sctName, "MYSQL_REPL_PASSWORD", "replication-password", true),
+	}
+
+	if c.Spec.MysqlOpts.InitTokuDB {
+		envs = append(envs, core.EnvVar{
+			Name:  "INIT_TOKUDB",
+			Value: "1",
+		})
+	}
+
+	return envs
 }
 
 func (c *initMysql) getLifecycle() *core.Lifecycle {
@@ -87,7 +110,7 @@ func (c *initMysql) getReadinessProbe() *core.Probe {
 }
 
 func (c *initMysql) getVolumeMounts() []core.VolumeMount {
-	return []core.VolumeMount{
+	volumeMounts := []core.VolumeMount{
 		{
 			Name:      utils.ConfVolumeName,
 			MountPath: "/mnt/conf.d",
@@ -97,16 +120,32 @@ func (c *initMysql) getVolumeMounts() []core.VolumeMount {
 			MountPath: "/mnt/config-map",
 		},
 		{
-			Name:      utils.DataVolumeName,
-			MountPath: "/mnt/data",
-		},
-		{
-			Name:      utils.SysVolumeName,
-			MountPath: "/host-sys",
-		},
-		{
 			Name:      utils.ScriptsVolumeName,
 			MountPath: "/mnt/scripts",
 		},
+		{
+			Name:      utils.XenonVolumeName,
+			MountPath: "/mnt/xenon",
+		},
 	}
+
+	if c.Spec.MysqlOpts.InitTokuDB {
+		volumeMounts = append(volumeMounts,
+			core.VolumeMount{
+				Name:      utils.SysVolumeName,
+				MountPath: "/host-sys",
+			},
+		)
+	}
+
+	if c.Spec.Persistence.Enabled {
+		volumeMounts = append(volumeMounts,
+			core.VolumeMount{
+				Name:      utils.DataVolumeName,
+				MountPath: "/mnt/data",
+			},
+		)
+	}
+
+	return volumeMounts
 }

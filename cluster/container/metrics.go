@@ -43,9 +43,10 @@ func (c *metrics) getCommand() []string {
 
 func (c *metrics) getEnvVars() []core.EnvVar {
 	sctName := c.GetNameForResource(utils.Secret)
-	metricsUsr := getEnvVarFromSecret(sctName, "METRICS_USER", "metrics-user", true)
-	metricsPwd := getEnvVarFromSecret(sctName, "METRICS_PASSWORD", "metrics-password", true)
-	return []core.EnvVar{metricsUsr, metricsPwd}
+	return []core.EnvVar{
+		getEnvVarFromSecret(sctName, "METRICS_USER", "metrics-user", true),
+		getEnvVarFromSecret(sctName, "METRICS_PASSWORD", "metrics-password", true),
+	}
 }
 
 func (c *metrics) getLifecycle() *core.Lifecycle {

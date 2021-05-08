@@ -81,3 +81,7 @@ var mysqlStaticConfigs = map[string]string{
 	"innodb_autoinc_lock_mode":    "2",
 	"performance_schema":          "1",
 }
+
+var mysqlTokudbConfigs = map[string]string{
+	"loose_tokudb_directio": "ON",
+}

@@ -25,6 +25,8 @@ const (
 
 	XenonPortName = "xenon"
 	XenonPort     = 8801
+
+	ReplicationUser = "qc_repl"
 )
 
 var (
@@ -62,6 +64,7 @@ const (
 	DataVolumeName    = "data"
 	SysVolumeName     = "host-sys"
 	ScriptsVolumeName = "scripts"
+	XenonVolumeName   = "xenon"
 )
 
 // ResourceName is the type for aliasing resources that will be created.

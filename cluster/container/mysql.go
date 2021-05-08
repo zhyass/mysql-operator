@@ -44,21 +44,25 @@ func (c *mysql) getCommand() []string {
 func (c *mysql) getEnvVars() []core.EnvVar {
 	sctName := c.GetNameForResource(utils.Secret)
 
-	rootPwd := getEnvVarFromSecret(sctName, "MYSQL_ROOT_PASSWORD", "root-password", false)
-	replUser := getEnvVarFromSecret(sctName, "MYSQL_REPL_USER", "replication-user", true)
-	replPwd := getEnvVarFromSecret(sctName, "MYSQL_REPL_PASSWORD", "replication-password", true)
-	user := getEnvVarFromSecret(sctName, "MYSQL_USER", "mysql-user", true)
-	pwd := getEnvVarFromSecret(sctName, "MYSQL_PASSWORD", "mysql-password", true)
-	database := getEnvVarFromSecret(sctName, "MYSQL_DATABASE", "mysql-database", true)
-	env := []core.EnvVar{rootPwd, replUser, replPwd, user, pwd, database}
+	envs := []core.EnvVar{
+		getEnvVarFromSecret(sctName, "MYSQL_ROOT_PASSWORD", "root-password", false),
+		getEnvVarFromSecret(sctName, "MYSQL_REPL_USER", "replication-user", true),
+		getEnvVarFromSecret(sctName, "MYSQL_REPL_PASSWORD", "replication-password", true),
+		getEnvVarFromSecret(sctName, "MYSQL_USER", "mysql-user", true),
+		getEnvVarFromSecret(sctName, "MYSQL_PASSWORD", "mysql-password", true),
+		getEnvVarFromSecret(sctName, "MYSQL_DATABASE", "mysql-database", true),
+		getEnvVarFromSecret(sctName, "METRICS_USER", "metrics-user", true),
+		getEnvVarFromSecret(sctName, "METRICS_PASSWORD", "metrics-password", true),
+	}
 
-	if c.Spec.MysqlOpts.InitTokudb {
-		env = append(env, core.EnvVar{
+	if c.Spec.MysqlOpts.InitTokuDB {
+		envs = append(envs, core.EnvVar{
 			Name:  "INIT_TOKUDB",
 			Value: "1",
 		})
 	}
-	return env
+
+	return envs
 }
 
 func (c *mysql) getLifecycle() *core.Lifecycle {

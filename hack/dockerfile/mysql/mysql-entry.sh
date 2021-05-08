@@ -122,6 +122,11 @@ if [ ! -d "$DATADIR/mysql" ]; then
 	echo "GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* to 'qc_repl'@'%' IDENTIFIED BY '$MYSQL_REPL_PASSWORD' ;" | "${mysql[@]}"
 	echo 'FLUSH PRIVILEGES ;' | "${mysql[@]}"
 
+	file_env 'METRICS_USER' 'qc_metrics'
+	file_env 'METRICS_PASSWORD' 'Metrics@233'
+	echo "GRANT SELECT, PROCESS, REPLICATION CLIENT ON *.* to '$METRICS_USER'@'%' IDENTIFIED BY '$METRICS_PASSWORD' ;" | "${mysql[@]}"
+	echo 'FLUSH PRIVILEGES ;' | "${mysql[@]}"
+
 	file_env 'MYSQL_USER' 'qingcloud'
 	echo "MySQL USER: $MYSQL_USER"
 	if [ $MYSQL_USER = "root" -o $MYSQL_USER = "qc_repl" ]; then

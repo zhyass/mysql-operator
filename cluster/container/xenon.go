@@ -43,47 +43,7 @@ func (c *xenon) getCommand() []string {
 }
 
 func (c *xenon) getEnvVars() []core.EnvVar {
-	sctName := c.GetNameForResource(utils.Secret)
-
-	rootPwd := getEnvVarFromSecret(sctName, "MYSQL_ROOT_PASSWORD", "root-password", false)
-	replUser := getEnvVarFromSecret(sctName, "MYSQL_REPL_USER", "replication-user", true)
-	replPwd := getEnvVarFromSecret(sctName, "MYSQL_REPL_PASSWORD", "replication-password", true)
-	podHostName := core.EnvVar{
-		Name: "POD_HOSTNAME",
-		ValueFrom: &core.EnvVarSource{
-			FieldRef: &core.ObjectFieldSelector{
-				APIVersion: "v1",
-				FieldPath:  "metadata.name",
-			},
-		},
-	}
-	host := core.EnvVar{
-		Name:  "HOST",
-		Value: fmt.Sprintf("$(POD_HOSTNAME).%s.%s", c.GetNameForResource(utils.HeadlessSVC), c.Namespace),
-	}
-
-	env := []core.EnvVar{rootPwd, replUser, replPwd, podHostName, host}
-
-	if c.Spec.MysqlOpts.InitTokudb {
-		env = append(env, core.EnvVar{
-			Name:  "Master_SysVars",
-			Value: "tokudb_fsync_log_period=default;sync_binlog=default;innodb_flush_log_at_trx_commit=default",
-		})
-		env = append(env, core.EnvVar{
-			Name:  "Slave_SysVars",
-			Value: "tokudb_fsync_log_period=1000;sync_binlog=1000;innodb_flush_log_at_trx_commit=1",
-		})
-	} else {
-		env = append(env, core.EnvVar{
-			Name:  "Master_SysVars",
-			Value: "sync_binlog=default;innodb_flush_log_at_trx_commit=default",
-		})
-		env = append(env, core.EnvVar{
-			Name:  "Slave_SysVars",
-			Value: "sync_binlog=1000;innodb_flush_log_at_trx_commit=1",
-		})
-	}
-	return env
+	return nil
 }
 
 func (c *xenon) getLifecycle() *core.Lifecycle {
@@ -147,9 +107,8 @@ func (c *xenon) getVolumeMounts() []core.VolumeMount {
 			MountPath: "/scripts",
 		},
 		{
-			Name:      utils.ConfMapVolumeName,
-			MountPath: "/etc/xenon/xenon.json",
-			SubPath:   "xenon.json",
+			Name:      utils.XenonVolumeName,
+			MountPath: "/etc/xenon",
 		},
 	}
 }

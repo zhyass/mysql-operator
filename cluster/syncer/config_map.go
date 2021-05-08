@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/blang/semver"
 	"github.com/go-ini/ini"
 	"github.com/presslabs/controller-util/syncer"
 	core "k8s.io/api/core/v1"
@@ -54,7 +53,6 @@ func NewConfigMapSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface 
 
 		cm.Data = map[string]string{
 			"node.cnf":        data,
-			"xenon.json":      buildXenonConf(c),
 			"leader-start.sh": buildLeaderStart(c),
 			"leader-stop.sh":  buildLeaderStop(c),
 		}
@@ -67,8 +65,11 @@ func buildMysqlConf(c *cluster.Cluster) (string, error) {
 	cfg := ini.Empty()
 	sec := cfg.Section("mysqld")
 
-	addKVConfigsToSection(sec, convertMapToKVConfig(mysqlCommonConfigs), c.Spec.MysqlOpts.MysqlConf)
-	addKVConfigsToSection(sec, convertMapToKVConfig(mysqlStaticConfigs), c.Spec.MysqlOpts.MysqlConf)
+	addKVConfigsToSection(sec, convertMapToKVConfig(mysqlCommonConfigs), convertMapToKVConfig(mysqlStaticConfigs), c.Spec.MysqlOpts.MysqlConf)
+
+	if c.Spec.MysqlOpts.InitTokuDB {
+		addKVConfigsToSection(sec, convertMapToKVConfig(mysqlTokudbConfigs))
+	}
 
 	data, err := writeConfigs(cfg)
 	if err != nil {
@@ -116,69 +117,6 @@ func writeConfigs(cfg *ini.File) (string, error) {
 		return "", err
 	}
 	return buf.String(), nil
-}
-
-func buildXenonConf(c *cluster.Cluster) string {
-	admitDefeatHearbeatCount := *c.Spec.XenonOpts.AdmitDefeatHearbeatCount
-	electionTimeout := *c.Spec.XenonOpts.ElectionTimeout
-	pingTimeout := electionTimeout / admitDefeatHearbeatCount
-	heartbeatTimeout := electionTimeout / admitDefeatHearbeatCount
-	requestTimeout := electionTimeout / admitDefeatHearbeatCount
-
-	host := c.GetOwnHostName()
-
-	version := "mysql80"
-	sv, err := semver.Make(c.GetMySQLVersion())
-	if err != nil {
-		log.Error(err, "failed to parse given MySQL version", "input", c.GetMySQLVersion())
-	}
-	if sv.Major == 5 {
-		if sv.Minor == 6 {
-			version = "mysql56"
-		} else {
-			version = "mysql57"
-		}
-	}
-
-	return fmt.Sprintf(`{
-	"log": {
-		"level": "INFO"
-	},
-	"server": {
-		"endpoint": "%s:%d"
-	},
-	"replication": {
-		"passwd": "@@REPL_PASSWD@@",
-		"user": "@@REPL_USER@@"
-	},
-	"rpc": {
-		"request-timeout": %d
-	},
-	"mysql": {
-		"admit-defeat-ping-count": 3,
-		"admin": "root",
-		"ping-timeout": %d,
-		"passwd": "@@ROOT_PASSWD@@",
-		"host": "localhost",
-		"version": "%s",
-		"master-sysvars": "tokudb_fsync_log_period=default;sync_binlog=default;innodb_flush_log_at_trx_commit=default",
-		"slave-sysvars": "tokudb_fsync_log_period=1000;sync_binlog=1000;innodb_flush_log_at_trx_commit=1",
-		"port": 3306,
-		"monitor-disabled": true
-	},
-	"raft": {
-		"election-timeout": %d,
-		"admit-defeat-hearbeat-count": %d,
-		"heartbeat-timeout": %d,
-		"meta-datadir": "/var/lib/xenon/",
-		"leader-start-command": "/scripts/leader-start.sh",
-		"leader-stop-command": "/scripts/leader-stop.sh",
-		"semi-sync-degrade": true,
-		"purge-binlog-disabled": true,
-		"super-idle": false
-	}
-}
-`, host, utils.XenonPort, requestTimeout, pingTimeout, version, electionTimeout, admitDefeatHearbeatCount, heartbeatTimeout)
 }
 
 func buildLeaderStart(c *cluster.Cluster) string {

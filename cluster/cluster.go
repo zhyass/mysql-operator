@@ -95,12 +95,6 @@ func (c *Cluster) GetMySQLVersion() string {
 	return version
 }
 
-func (c *Cluster) GetOwnHostName() string {
-	return fmt.Sprintf("%s.%s.%s", c.ObjectMeta.Name,
-		c.GetNameForResource(utils.HeadlessSVC),
-		c.Namespace)
-}
-
 func (c *Cluster) CreatePeers() string {
 	str := ""
 	for i := 0; i < int(*c.Spec.Replicas); i++ {
@@ -127,6 +121,19 @@ func (c *Cluster) EnsureVolumes() []core.Volume {
 				EmptyDir: &core.EmptyDirVolumeSource{},
 			},
 		})
+	}
+
+	if c.Spec.MysqlOpts.InitTokuDB {
+		volumes = append(volumes,
+			core.Volume{
+				Name: utils.SysVolumeName,
+				VolumeSource: core.VolumeSource{
+					HostPath: &core.HostPathVolumeSource{
+						Path: "/sys",
+					},
+				},
+			},
+		)
 	}
 
 	volumes = append(volumes,
@@ -159,14 +166,13 @@ func (c *Cluster) EnsureVolumes() []core.Volume {
 			},
 		},
 		core.Volume{
-			Name: utils.SysVolumeName,
+			Name: utils.XenonVolumeName,
 			VolumeSource: core.VolumeSource{
-				HostPath: &core.HostPathVolumeSource{
-					Path: "/sys",
-				},
+				EmptyDir: &core.EmptyDirVolumeSource{},
 			},
 		},
 	)
+
 	return volumes
 }
 
