@@ -90,6 +90,7 @@ func runInitCommand(cfg *Config) error {
 		return fmt.Errorf("failed to write xenon.json: %s", err)
 	}
 
+	log.Info("init command success")
 	return nil
 }
 
