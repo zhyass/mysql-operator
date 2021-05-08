@@ -220,7 +220,6 @@ spec:
                 type: object
               podSpec:
                 default:
-                  busyboxImage: busybox:1.32
                   imagePullPolicy: IfNotPresent
                   resources:
                     limits:
@@ -854,9 +853,6 @@ spec:
                     additionalProperties:
                       type: string
                     type: object
-                  busyboxImage:
-                    default: busybox:1.32
-                    type: string
                   imagePullPolicy:
                     default: IfNotPresent
                     description: PullPolicy describes a policy for if/when to pull

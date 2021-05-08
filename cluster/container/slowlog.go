@@ -33,11 +33,11 @@ func (c *slowLog) getName() string {
 }
 
 func (c *slowLog) getImage() string {
-	return c.Spec.PodSpec.BusyboxImage
+	return c.Spec.PodSpec.SidecarImage
 }
 
 func (c *slowLog) getCommand() []string {
-	return []string{"tail", "-f", "/logs/mysql-slow.log"}
+	return []string{"sidecar", "tail", "/logs/mysql-slow.log"}
 }
 
 func (c *slowLog) getEnvVars() []core.EnvVar {

@@ -32,7 +32,7 @@ import (
 func NewInitCommand(cfg *Config) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "init",
-		Short: "Used to do some initialization operations.",
+		Short: "do some initialization operations.",
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := runInitCommand(cfg); err != nil {
 				log.Error(err, "init command failed")

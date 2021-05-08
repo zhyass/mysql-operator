@@ -49,7 +49,9 @@ func main() {
 	cfg := sidecar.NewConfig()
 
 	initCmd := sidecar.NewInitCommand(cfg)
+	tailCmd := sidecar.NewTailCommand(cfg)
 	cmd.AddCommand(initCmd)
+	cmd.AddCommand(tailCmd)
 
 	if err := cmd.Execute(); err != nil {
 		log.Error(err, "failed to execute command", "cmd", cmd)

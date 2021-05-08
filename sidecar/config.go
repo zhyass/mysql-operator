@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/blang/semver"
+	"github.com/zhyass/mysql-operator/utils"
 )
 
 type Config struct {
@@ -47,7 +48,8 @@ type Config struct {
 func NewConfig() *Config {
 	mysqlVersion, err := semver.Parse(getEnvValue("MYSQL_VERSION"))
 	if err != nil {
-		panic(err)
+		log.Info("MYSQL_VERSION is not a semver version")
+		mysqlVersion, _ = semver.Parse(utils.MySQLDefaultVersion)
 	}
 
 	initTokuDB := false
@@ -57,11 +59,11 @@ func NewConfig() *Config {
 
 	admitDefeatHearbeatCount, err := strconv.ParseInt(getEnvValue("ADMIT_DEFEAT_HEARBEAT_COUNT"), 10, 32)
 	if err != nil {
-		panic(err)
+		admitDefeatHearbeatCount = 5
 	}
 	electionTimeout, err := strconv.ParseInt(getEnvValue("ELECTION_TIMEOUT"), 10, 32)
 	if err != nil {
-		panic(err)
+		electionTimeout = 10000
 	}
 
 	return &Config{
