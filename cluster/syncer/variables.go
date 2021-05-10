@@ -28,11 +28,11 @@ var mysqlSysConfigs = map[string]string{
 	"slow_query_log_file":                "/var/log/mysql/mysql-slow.log",
 	"read_only":                          "ON",
 	"binlog_format":                      "row",
+	"plugin-load":                        "\"semisync_master.so;semisync_slave.so;audit_log.so;connection_control.so\"",
 	"log-bin":                            "/var/lib/mysql/mysql-bin",
 	"log-timestamps":                     "SYSTEM",
 	"innodb_open_files":                  "655360",
 	"open_files_limit":                   "655360",
-	"plugin-load":                        "semisync_master.so;semisync_slave.so;audit_log.so;connection_control.so",
 	"rpl_semi_sync_master_enabled":       "OFF",
 	"rpl_semi_sync_slave_enabled":        "ON",
 	"rpl_semi_sync_master_wait_no_slave": "ON",
@@ -48,7 +48,7 @@ var mysqlSysConfigs = map[string]string{
 	"tmp_table_size":                     "32M",
 	"tmpdir":                             "/var/lib/mysql",
 	"audit_log_file":                     "/var/log/mysql/mysql-audit.log",
-	"audit_log_exclude_accounts":         "root@localhost,root@127.0.0.1,qc_repl@%,qc_metrics@%",
+	"audit_log_exclude_accounts":         "\"root@localhost,root@127.0.0.1,qc_repl@%,qc_metrics@%\"",
 	"audit_log_buffer_size":              "16M",
 }
 

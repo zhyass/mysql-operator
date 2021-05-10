@@ -219,7 +219,7 @@ func buildInitSql(cfg *Config) []byte {
 	sql := fmt.Sprintf(`SET @@SESSION.SQL_LOG_BIN=0;
 DELETE FROM mysql.user WHERE user IN ('%s', '%s');
 GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* to '%s'@'%%' IDENTIFIED BY '%s';
-echo "GRANT SELECT, PROCESS, REPLICATION CLIENT ON *.* to '%s'@'%%' IDENTIFIED BY '%s';
+GRANT SELECT, PROCESS, REPLICATION CLIENT ON *.* to '%s'@'%%' IDENTIFIED BY '%s';
 `, cfg.ReplicationUser, cfg.MetricsUser, cfg.ReplicationUser, cfg.ReplicationPassword, cfg.MetricsUser, cfg.MetricsPassword)
 	return utils.StringToBytes(sql)
 }

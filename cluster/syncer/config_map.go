@@ -62,7 +62,7 @@ func NewConfigMapSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface 
 }
 
 func buildMysqlConf(c *cluster.Cluster) (string, error) {
-	cfg := ini.Empty()
+	cfg := ini.Empty(ini.LoadOptions{IgnoreInlineComment: true})
 	sec := cfg.Section("mysqld")
 
 	addKVConfigsToSection(sec, convertMapToKVConfig(mysqlSysConfigs), convertMapToKVConfig(mysqlCommonConfigs),
