@@ -38,7 +38,7 @@ func (c *xenon) getImage() string {
 	return c.Spec.XenonOpts.Image
 }
 
-func (c *xenon) getCommand() []string {
+func (c *xenon) getArgs() []string {
 	return nil
 }
 
@@ -104,11 +104,11 @@ func (c *xenon) getVolumeMounts() []core.VolumeMount {
 	return []core.VolumeMount{
 		{
 			Name:      utils.ScriptsVolumeName,
-			MountPath: "/scripts",
+			MountPath: utils.ScriptsVolumeMountPath,
 		},
 		{
 			Name:      utils.XenonVolumeName,
-			MountPath: "/etc/xenon",
+			MountPath: utils.XenonVolumeMountPath,
 		},
 	}
 }

@@ -17,8 +17,6 @@ limitations under the License.
 package container
 
 import (
-	"strconv"
-
 	"github.com/zhyass/mysql-operator/cluster"
 	"github.com/zhyass/mysql-operator/utils"
 	core "k8s.io/api/core/v1"
@@ -35,49 +33,38 @@ func (c *initMysql) getName() string {
 }
 
 func (c *initMysql) getImage() string {
-	return c.Spec.PodSpec.SidecarImage
+	img := utils.MysqlImageVersions[c.GetMySQLVersion()]
+	return img
 }
 
-func (c *initMysql) getCommand() []string {
-	return []string{"sidecar", "init"}
+func (c *initMysql) getArgs() []string {
+	return nil
 }
 
 func (c *initMysql) getEnvVars() []core.EnvVar {
-	sctName := c.GetNameForResource(utils.Secret)
 	envs := []core.EnvVar{
 		{
-			Name: "POD_HOSTNAME",
-			ValueFrom: &core.EnvVarSource{
-				FieldRef: &core.ObjectFieldSelector{
-					APIVersion: "v1",
-					FieldPath:  "metadata.name",
-				},
-			},
+			Name:  "MYSQL_ALLOW_EMPTY_PASSWORD",
+			Value: "yes",
 		},
 		{
-			Name:  "NAMESPACE",
-			Value: c.Namespace,
+			Name:  "MYSQL_ROOT_HOST",
+			Value: "127.0.0.1",
 		},
 		{
-			Name:  "SERVICE_NAME",
-			Value: c.GetNameForResource(utils.HeadlessSVC),
+			Name:  "MYSQL_INIT_ONLY",
+			Value: "1",
 		},
-		{
-			Name:  "ADMIT_DEFEAT_HEARBEAT_COUNT",
-			Value: strconv.Itoa(int(*c.Spec.XenonOpts.AdmitDefeatHearbeatCount)),
-		},
-		{
-			Name:  "ELECTION_TIMEOUT",
-			Value: strconv.Itoa(int(*c.Spec.XenonOpts.ElectionTimeout)),
-		},
-		{
-			Name:  "MY_MYSQL_VERSION",
-			Value: c.GetMySQLVersion(),
-		},
-		getEnvVarFromSecret(sctName, "MYSQL_ROOT_PASSWORD", "root-password", false),
-		getEnvVarFromSecret(sctName, "MYSQL_REPL_USER", "replication-user", true),
-		getEnvVarFromSecret(sctName, "MYSQL_REPL_PASSWORD", "replication-password", true),
 	}
+
+	sctName := c.GetNameForResource(utils.Secret)
+	envs = append(
+		envs,
+		getEnvVarFromSecret(sctName, "MYSQL_ROOT_PASSWORD", "root-password", false),
+		getEnvVarFromSecret(sctName, "MYSQL_DATABASE", "mysql-database", true),
+		getEnvVarFromSecret(sctName, "MYSQL_USER", "mysql-user", true),
+		getEnvVarFromSecret(sctName, "MYSQL_PASSWORD", "mysql-password", true),
+	)
 
 	if c.Spec.MysqlOpts.InitTokuDB {
 		envs = append(envs, core.EnvVar{
@@ -94,7 +81,7 @@ func (c *initMysql) getLifecycle() *core.Lifecycle {
 }
 
 func (c *initMysql) getResources() core.ResourceRequirements {
-	return c.Spec.PodSpec.Resources
+	return c.Spec.MysqlOpts.Resources
 }
 
 func (c *initMysql) getPorts() []core.ContainerPort {
@@ -110,42 +97,14 @@ func (c *initMysql) getReadinessProbe() *core.Probe {
 }
 
 func (c *initMysql) getVolumeMounts() []core.VolumeMount {
-	volumeMounts := []core.VolumeMount{
+	return []core.VolumeMount{
 		{
 			Name:      utils.ConfVolumeName,
-			MountPath: "/mnt/conf.d",
+			MountPath: utils.ConfVolumeMountPath,
 		},
 		{
-			Name:      utils.ConfMapVolumeName,
-			MountPath: "/mnt/config-map",
-		},
-		{
-			Name:      utils.ScriptsVolumeName,
-			MountPath: "/mnt/scripts",
-		},
-		{
-			Name:      utils.XenonVolumeName,
-			MountPath: "/mnt/xenon",
+			Name:      utils.DataVolumeName,
+			MountPath: utils.DataVolumeMountPath,
 		},
 	}
-
-	if c.Spec.MysqlOpts.InitTokuDB {
-		volumeMounts = append(volumeMounts,
-			core.VolumeMount{
-				Name:      utils.SysVolumeName,
-				MountPath: "/host-sys",
-			},
-		)
-	}
-
-	if c.Spec.Persistence.Enabled {
-		volumeMounts = append(volumeMounts,
-			core.VolumeMount{
-				Name:      utils.DataVolumeName,
-				MountPath: "/mnt/data",
-			},
-		)
-	}
-
-	return volumeMounts
 }

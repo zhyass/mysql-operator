@@ -78,6 +78,7 @@ func NewStatefulSetSyncer(cli client.Client, c *cluster.Cluster) syncer.Interfac
 }
 
 func ensurePodSpec(c *cluster.Cluster) core.PodSpec {
+	initSidecar := container.EnsureContainer(utils.ContainerInitSidecarName, c)
 	initMysql := container.EnsureContainer(utils.ContainerInitMysqlName, c)
 	mysql := container.EnsureContainer(utils.ContainerMysqlName, c)
 	xenon := container.EnsureContainer(utils.ContainerXenonName, c)
@@ -87,7 +88,7 @@ func ensurePodSpec(c *cluster.Cluster) core.PodSpec {
 		containers = append(containers, container.EnsureContainer(utils.ContainerMetricsName, c))
 	}
 	return core.PodSpec{
-		InitContainers:     []core.Container{initMysql},
+		InitContainers:     []core.Container{initSidecar, initMysql},
 		Containers:         containers,
 		Volumes:            c.EnsureVolumes(),
 		SchedulerName:      c.Spec.PodSpec.SchedulerName,

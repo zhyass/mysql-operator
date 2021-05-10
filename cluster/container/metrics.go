@@ -37,8 +37,8 @@ func (c *metrics) getImage() string {
 	return c.Spec.MetricsOpts.Image
 }
 
-func (c *metrics) getCommand() []string {
-	return []string{"sh", "-c", `DATA_SOURCE_NAME="$METRICS_USER:$METRICS_PASSWORD@(localhost:3306)/" /bin/mysqld_exporter`}
+func (c *metrics) getArgs() []string {
+	return nil
 }
 
 func (c *metrics) getEnvVars() []core.EnvVar {
@@ -46,6 +46,10 @@ func (c *metrics) getEnvVars() []core.EnvVar {
 	return []core.EnvVar{
 		getEnvVarFromSecret(sctName, "METRICS_USER", "metrics-user", true),
 		getEnvVarFromSecret(sctName, "METRICS_PASSWORD", "metrics-password", true),
+		{
+			Name:  "DATA_SOURCE_NAME",
+			Value: "$(METRICS_USER):$(METRICS_PASSWORD)@(localhost:3306)/",
+		},
 	}
 }
 

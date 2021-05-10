@@ -45,25 +45,39 @@ func NewInitCommand(cfg *Config) *cobra.Command {
 }
 
 func runInitCommand(cfg *Config) error {
+	var err error
+
 	// remove lost+found.
-	if exists, _ := checkIfPathExists("/mnt/data"); exists {
-		if err := os.RemoveAll("/mnt/data/lost+found"); err != nil {
+	if exists, _ := checkIfPathExists(dataPath); exists {
+		if err := os.RemoveAll(dataPath + "/lost+found"); err != nil {
 			return fmt.Errorf("removing lost+found: %s", err)
 		}
 	}
 
-	// build server-id.cnf.
-	serverIDConfig, err := buildServerIDConfig(cfg.generateServerID())
-	if err != nil {
-		return fmt.Errorf("failed to build server-id.cnf: %s", err)
-	}
-	if err := serverIDConfig.SaveTo(path.Join(configPath, "server-id.cnf")); err != nil {
-		return fmt.Errorf("failed to save server-id.cnf: %s", err)
+	// copy appropriate my.cnf from config-map to config mount.
+	if err = copyFile(path.Join(configMapPath, "my.cnf"), path.Join(configPath, "my.cnf")); err != nil {
+		return fmt.Errorf("failed to copy my.cnf: %s", err)
 	}
 
-	// copy appropriate conf.d files from config-map to config mount.
-	if err = copyFile(path.Join(configMapPath, "node.cnf"), path.Join(configPath, "node.cnf")); err != nil {
-		return fmt.Errorf("failed to copy node.cnf: %s", err)
+	if err = os.Mkdir(extraConfPath, os.FileMode(0755)); err != nil {
+		if !os.IsExist(err) {
+			return fmt.Errorf("error mkdir %s: %s", extraConfPath, err)
+		}
+	}
+
+	// build init.sql.
+	if err = ioutil.WriteFile(extraConfPath, buildInitSql(cfg), 0644); err != nil {
+		return fmt.Errorf("failed to write xenon.json: %s", err)
+	}
+
+	// build extra.cnf.
+	serverIDConfig, err := buildExtraConfig(cfg)
+	if err != nil {
+		return fmt.Errorf("failed to build extra.cnf: %s", err)
+	}
+	// save extra.cnf to conf.d.
+	if err := serverIDConfig.SaveTo(path.Join(extraConfPath, "extra.cnf")); err != nil {
+		return fmt.Errorf("failed to save extra.cnf: %s", err)
 	}
 
 	// copy leader-start.sh from config-map to scripts mount.
@@ -86,7 +100,8 @@ func runInitCommand(cfg *Config) error {
 
 	// for install tokudb.
 	if cfg.InitTokuDB {
-		cmd := exec.Command("sh", "-c", "echo never > /host-sys/kernel/mm/transparent_hugepage/enabled")
+		arg := fmt.Sprintf("echo never > %s/kernel/mm/transparent_hugepage/enabled", sysPath)
+		cmd := exec.Command("sh", "-c", arg)
 		cmd.Stderr = os.Stderr
 		if err = cmd.Run(); err != nil {
 			return fmt.Errorf("failed to disable the transparent_hugepage: %s", err)
@@ -116,15 +131,20 @@ func checkIfPathExists(path string) (bool, error) {
 	return true, nil
 }
 
-func buildServerIDConfig(id int) (*ini.File, error) {
-	cfg := ini.Empty()
-	sec := cfg.Section("mysqld")
+func buildExtraConfig(cfg *Config) (*ini.File, error) {
+	conf := ini.Empty()
+	sec := conf.Section("mysqld")
+	id := cfg.generateServerID()
 
 	if _, err := sec.NewKey("server-id", strconv.Itoa(id)); err != nil {
 		return nil, err
 	}
 
-	return cfg, nil
+	if _, err := sec.NewKey("init-file", extraConfPath+"/init.sql"); err != nil {
+		return nil, err
+	}
+
+	return conf, nil
 }
 
 func buildXenonConf(cfg *Config) []byte {
@@ -192,4 +212,13 @@ func buildXenonConf(cfg *Config) []byte {
 		pingTimeout, cfg.RootPassword, version, masterSysVars, slaveSysVars, cfg.ElectionTimeout,
 		cfg.AdmitDefeatHearbeatCount, heartbeatTimeout)
 	return utils.StringToBytes(str)
+}
+
+func buildInitSql(cfg *Config) []byte {
+	sql := fmt.Sprintf(`SET @@SESSION.SQL_LOG_BIN=0;
+DELETE FROM mysql.user WHERE user IN ('%s', '%s');
+GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* to '%s'@'%%' IDENTIFIED BY '%s';
+echo "GRANT SELECT, PROCESS, REPLICATION CLIENT ON *.* to '%s'@'%%' IDENTIFIED BY '%s';
+`, cfg.ReplicationUser, cfg.MetricsUser, cfg.ReplicationUser, cfg.ReplicationPassword, cfg.MetricsUser, cfg.MetricsPassword)
+	return utils.StringToBytes(sql)
 }

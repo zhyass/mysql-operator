@@ -37,6 +37,9 @@ type Config struct {
 	ReplicationUser     string
 	ReplicationPassword string
 
+	MetricsUser     string
+	MetricsPassword string
+
 	InitTokuDB bool
 
 	MySQLVersion semver.Version
@@ -75,6 +78,9 @@ func NewConfig() *Config {
 
 		ReplicationUser:     getEnvValue("MYSQL_REPL_USER"),
 		ReplicationPassword: getEnvValue("MYSQL_REPL_PASSWORD"),
+
+		MetricsUser:     getEnvValue("METRICS_USER"),
+		MetricsPassword: getEnvValue("METRICS_PASSWORD"),
 
 		InitTokuDB: initTokuDB,
 

@@ -16,19 +16,6 @@ limitations under the License.
 
 package utils
 
-const (
-	MysqlPortName = "mysql"
-	MysqlPort     = 3306
-
-	MetricsPortName = "metrics"
-	MetricsPort     = 9104
-
-	XenonPortName = "xenon"
-	XenonPort     = 8801
-
-	ReplicationUser = "qc_repl"
-)
-
 var (
 	// MySQLDefaultVersion is the version for mysql that should be used
 	MySQLDefaultVersion = "5.7.33"
@@ -40,24 +27,33 @@ var (
 
 	// MysqlImageVersions is a map of supported mysql version and their image
 	MysqlImageVersions = map[string]string{
-		"5.7.33": "xenondb/percona:5.7.33",
+		"5.7.33": "percona/percona-server:5.7.33",
 	}
 )
 
-// containers names
 const (
 	// init containers
-	ContainerInitMysqlName = "init-mysql"
+	ContainerInitSidecarName = "init-sidecar"
+	ContainerInitMysqlName   = "init-mysql"
 
 	// containers
 	ContainerMysqlName   = "mysql"
 	ContainerXenonName   = "xenon"
 	ContainerMetricsName = "metrics"
 	ContainerSlowLogName = "slowlog"
-)
 
-// volumes names
-const (
+	MysqlPortName = "mysql"
+	MysqlPort     = 3306
+
+	MetricsPortName = "metrics"
+	MetricsPort     = 9104
+
+	XenonPortName = "xenon"
+	XenonPort     = 8801
+
+	ReplicationUser = "qc_repl"
+
+	// volumes names
 	ConfVolumeName    = "conf"
 	ConfMapVolumeName = "config-map"
 	LogsVolumeName    = "logs"
@@ -65,6 +61,15 @@ const (
 	SysVolumeName     = "host-sys"
 	ScriptsVolumeName = "scripts"
 	XenonVolumeName   = "xenon"
+
+	// volumes mount path.
+	ConfVolumeMountPath    = "/etc/mysql"
+	ConfMapVolumeMountPath = "/mnt/config-map"
+	LogsVolumeMountPath    = "/var/log/mysql"
+	DataVolumeMountPath    = "/var/lib/mysql"
+	SysVolumeMountPath     = "/host-sys"
+	ScriptsVolumeMountPath = "/scripts"
+	XenonVolumeMountPath   = "/etc/xenon"
 )
 
 // ResourceName is the type for aliasing resources that will be created.

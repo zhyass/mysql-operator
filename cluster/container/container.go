@@ -25,7 +25,7 @@ import (
 type container interface {
 	getName() string
 	getImage() string
-	getCommand() []string
+	getArgs() []string
 	getEnvVars() []core.EnvVar
 	getLifecycle() *core.Lifecycle
 	getResources() core.ResourceRequirements
@@ -38,6 +38,8 @@ type container interface {
 func EnsureContainer(name string, c *cluster.Cluster) core.Container {
 	var ctr container
 	switch name {
+	case utils.ContainerInitSidecarName:
+		ctr = &initSidecar{c, name}
 	case utils.ContainerInitMysqlName:
 		ctr = &initMysql{c, name}
 	case utils.ContainerMysqlName:
@@ -54,7 +56,7 @@ func EnsureContainer(name string, c *cluster.Cluster) core.Container {
 		Name:            ctr.getName(),
 		Image:           ctr.getImage(),
 		ImagePullPolicy: c.Spec.PodSpec.ImagePullPolicy,
-		Command:         ctr.getCommand(),
+		Args:            ctr.getArgs(),
 		Env:             ctr.getEnvVars(),
 		Lifecycle:       ctr.getLifecycle(),
 		Resources:       ctr.getResources(),

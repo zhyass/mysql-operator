@@ -23,6 +23,35 @@ import (
 // log is for logging in this package.
 var log = logf.Log.WithName("cluster-syncer")
 
+var mysqlSysConfigs = map[string]string{
+	"default-time-zone":                  "+08:00",
+	"slow_query_log_file":                "/var/log/mysql/mysql-slow.log",
+	"read_only":                          "ON",
+	"binlog_format":                      "row",
+	"log-bin":                            "/var/lib/mysql/mysql-bin",
+	"log-timestamps":                     "SYSTEM",
+	"innodb_open_files":                  "655360",
+	"open_files_limit":                   "655360",
+	"plugin-load":                        "semisync_master.so;semisync_slave.so;audit_log.so;connection_control.so",
+	"rpl_semi_sync_master_enabled":       "OFF",
+	"rpl_semi_sync_slave_enabled":        "ON",
+	"rpl_semi_sync_master_wait_no_slave": "ON",
+	"rpl_semi_sync_master_timeout":       "1000000000000000000",
+	"gtid-mode":                          "ON",
+	"enforce-gtid-consistency":           "ON",
+	"slave_parallel_type":                "LOGICAL_CLOCK",
+	"relay_log":                          "/var/lib/mysql/mysql-relay-bin",
+	"relay_log_index":                    "/var/lib/mysql/mysql-relay-bin.index",
+	"master_info_repository":             "TABLE",
+	"relay_log_info_repository":          "TABLE",
+	"slow_query_log":                     "1",
+	"tmp_table_size":                     "32M",
+	"tmpdir":                             "/var/lib/mysql",
+	"audit_log_file":                     "/var/log/mysql/mysql-audit.log",
+	"audit_log_exclude_accounts":         "root@localhost,root@127.0.0.1,qc_repl@%,qc_metrics@%",
+	"audit_log_buffer_size":              "16M",
+}
+
 var mysqlCommonConfigs = map[string]string{
 	"character_set_server":                            "utf8mb4",
 	"interactive_timeout":                             "3600",
@@ -84,4 +113,14 @@ var mysqlStaticConfigs = map[string]string{
 
 var mysqlTokudbConfigs = map[string]string{
 	"loose_tokudb_directio": "ON",
+}
+
+var mysqlBooleanConfigs = []string{
+	"federated",
+	"skip-host-cache",
+	"skip-name-resolve",
+	"core-file",
+	"skip-slave-start",
+	"log-slave-updates",
+	"!includedir /etc/mysql/conf.d",
 }

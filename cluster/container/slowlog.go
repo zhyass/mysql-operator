@@ -36,8 +36,8 @@ func (c *slowLog) getImage() string {
 	return c.Spec.PodSpec.SidecarImage
 }
 
-func (c *slowLog) getCommand() []string {
-	return []string{"sidecar", "tail", "/logs/mysql-slow.log"}
+func (c *slowLog) getArgs() []string {
+	return []string{"tail", utils.LogsVolumeMountPath + "/mysql-slow.log"}
 }
 
 func (c *slowLog) getEnvVars() []core.EnvVar {
@@ -68,7 +68,7 @@ func (c *slowLog) getVolumeMounts() []core.VolumeMount {
 	return []core.VolumeMount{
 		{
 			Name:      utils.LogsVolumeName,
-			MountPath: "/logs",
+			MountPath: utils.LogsVolumeMountPath,
 		},
 	}
 }

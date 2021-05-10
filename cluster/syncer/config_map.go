@@ -52,7 +52,7 @@ func NewConfigMapSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface 
 		}
 
 		cm.Data = map[string]string{
-			"node.cnf":        data,
+			"my.cnf":          data,
 			"leader-start.sh": buildLeaderStart(c),
 			"leader-stop.sh":  buildLeaderStop(c),
 		}
@@ -65,10 +65,17 @@ func buildMysqlConf(c *cluster.Cluster) (string, error) {
 	cfg := ini.Empty()
 	sec := cfg.Section("mysqld")
 
-	addKVConfigsToSection(sec, convertMapToKVConfig(mysqlCommonConfigs), convertMapToKVConfig(mysqlStaticConfigs), c.Spec.MysqlOpts.MysqlConf)
+	addKVConfigsToSection(sec, convertMapToKVConfig(mysqlSysConfigs), convertMapToKVConfig(mysqlCommonConfigs),
+		convertMapToKVConfig(mysqlStaticConfigs), c.Spec.MysqlOpts.MysqlConf)
 
 	if c.Spec.MysqlOpts.InitTokuDB {
 		addKVConfigsToSection(sec, convertMapToKVConfig(mysqlTokudbConfigs))
+	}
+
+	for _, key := range mysqlBooleanConfigs {
+		if _, err := sec.NewBooleanKey(key); err != nil {
+			log.Error(err, "failed to add boolean key to config section", "key", key)
+		}
 	}
 
 	data, err := writeConfigs(cfg)

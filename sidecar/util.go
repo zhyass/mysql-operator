@@ -20,16 +20,20 @@ import (
 	"io"
 	"os"
 
+	"github.com/zhyass/mysql-operator/utils"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 var (
 	log                 = logf.Log.WithName("sidecar")
 	mysqlServerIDOffset = 100
-	configPath          = "/mnt/conf.d"
-	configMapPath       = "/mnt/config-map"
-	scriptsPath         = "/mnt/scripts"
-	xenonPath           = "/mnt/xenon"
+	configPath          = utils.ConfVolumeMountPath
+	configMapPath       = utils.ConfMapVolumeMountPath
+	dataPath            = utils.DataVolumeMountPath
+	extraConfPath       = utils.ConfVolumeMountPath + "/conf.d"
+	scriptsPath         = utils.ScriptsVolumeMountPath
+	sysPath             = utils.SysVolumeMountPath
+	xenonPath           = utils.XenonVolumeMountPath
 )
 
 // copyFile the src file to dst.

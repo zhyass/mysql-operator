@@ -37,32 +37,12 @@ func (c *mysql) getImage() string {
 	return img
 }
 
-func (c *mysql) getCommand() []string {
+func (c *mysql) getArgs() []string {
 	return nil
 }
 
 func (c *mysql) getEnvVars() []core.EnvVar {
-	sctName := c.GetNameForResource(utils.Secret)
-
-	envs := []core.EnvVar{
-		getEnvVarFromSecret(sctName, "MYSQL_ROOT_PASSWORD", "root-password", false),
-		getEnvVarFromSecret(sctName, "MYSQL_REPL_USER", "replication-user", true),
-		getEnvVarFromSecret(sctName, "MYSQL_REPL_PASSWORD", "replication-password", true),
-		getEnvVarFromSecret(sctName, "MYSQL_USER", "mysql-user", true),
-		getEnvVarFromSecret(sctName, "MYSQL_PASSWORD", "mysql-password", true),
-		getEnvVarFromSecret(sctName, "MYSQL_DATABASE", "mysql-database", true),
-		getEnvVarFromSecret(sctName, "METRICS_USER", "metrics-user", true),
-		getEnvVarFromSecret(sctName, "METRICS_PASSWORD", "metrics-password", true),
-	}
-
-	if c.Spec.MysqlOpts.InitTokuDB {
-		envs = append(envs, core.EnvVar{
-			Name:  "INIT_TOKUDB",
-			Value: "1",
-		})
-	}
-
-	return envs
+	return nil
 }
 
 func (c *mysql) getLifecycle() *core.Lifecycle {
@@ -116,15 +96,15 @@ func (c *mysql) getVolumeMounts() []core.VolumeMount {
 	return []core.VolumeMount{
 		{
 			Name:      utils.ConfVolumeName,
-			MountPath: "/etc/mysql/conf.d",
+			MountPath: utils.ConfVolumeMountPath,
 		},
 		{
 			Name:      utils.DataVolumeName,
-			MountPath: "/var/lib/mysql",
+			MountPath: utils.DataVolumeMountPath,
 		},
 		{
 			Name:      utils.LogsVolumeName,
-			MountPath: "/var/log/mysql",
+			MountPath: utils.LogsVolumeMountPath,
 		},
 	}
 }
