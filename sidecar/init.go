@@ -66,8 +66,9 @@ func runInitCommand(cfg *Config) error {
 	}
 
 	// build init.sql.
-	if err = ioutil.WriteFile(extraConfPath, buildInitSql(cfg), 0644); err != nil {
-		return fmt.Errorf("failed to write xenon.json: %s", err)
+	initSqlPath := path.Join(extraConfPath, "init.sql")
+	if err = ioutil.WriteFile(initSqlPath, buildInitSql(cfg), 0644); err != nil {
+		return fmt.Errorf("failed to write init.sql: %s", err)
 	}
 
 	// build extra.cnf.
