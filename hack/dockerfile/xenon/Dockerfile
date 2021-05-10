@@ -19,21 +19,16 @@ RUN set -ex; \
 FROM alpine:3.13
 
 RUN set -ex \
-    # Create a group and user
-    && addgroup -g 999 mysql && adduser -u 999 -g 999 -S mysql \
     && apk add --no-cache curl bash \
     && mkdir -p /etc/xenon /var/lib/xenon /lib64 \
     && ln -s /lib/libc.musl-x86_64.so.1 /lib64/ld-linux-x86-64.so.2 \
     && echo "/etc/xenon/xenon.json" > /config.path \
-    # allow to change config files
-    && chown -R 999:999 /etc/xenon /var/lib/xenon \
     && chmod u+s /bin/ping
 
-COPY --from=builder --chown=999:999 /go/src/github.com/radondb/xenon/bin/xenon /usr/local/bin/xenon
-COPY --from=builder --chown=999:999 /go/src/github.com/radondb/xenon/bin/xenoncli /usr/local/bin/xenoncli
+COPY --from=builder /go/src/github.com/radondb/xenon/bin/xenon /usr/local/bin/xenon
+COPY --from=builder /go/src/github.com/radondb/xenon/bin/xenoncli /usr/local/bin/xenoncli
 COPY xenon-entry.sh /usr/local/bin/docker-entrypoint
 
-USER 999
 WORKDIR /
 EXPOSE 8801
 VOLUME ["/var/lib/xenon", "/etc/xenon"]

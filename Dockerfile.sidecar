@@ -19,19 +19,14 @@ COPY sidecar/ sidecar/
 COPY utils/ utils/
 
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o sidecar cmd/sidecar/main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o bin/sidecar cmd/sidecar/main.go
 
 ###############################################################################
 #  Docker image for Sidecar
 ###############################################################################
 FROM alpine:3.13
 
-RUN set -ex \
-    # Create a group and user
-    && addgroup -g 999 mysql && adduser -u 999 -g 999 -S mysql
-
-USER 999:999
 WORKDIR /
-COPY --from=builder --chown=999:999 /workspace/sidecar /usr/local/bin/sidecar
+COPY --from=builder /workspace/bin/sidecar /usr/local/bin/sidecar
 
 ENTRYPOINT ["sidecar"]
