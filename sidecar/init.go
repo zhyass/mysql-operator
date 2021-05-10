@@ -66,12 +66,21 @@ func runInitCommand(cfg *Config) error {
 		return fmt.Errorf("failed to copy node.cnf: %s", err)
 	}
 
-	// copy scripts files from config-map to scripts mount.
-	scriptFilesPath := path.Join(scriptsPath, "*.sh")
-	if err = copyFile(path.Join(configMapPath, "*.sh"), scriptFilesPath); err != nil {
+	// copy leader-start.sh from config-map to scripts mount.
+	leaderStartPath := path.Join(scriptsPath, "leader-start.sh")
+	if err = copyFile(path.Join(configMapPath, "leader-start.sh"), leaderStartPath); err != nil {
 		return fmt.Errorf("failed to copy scripts: %s", err)
 	}
-	if err = os.Chmod(scriptFilesPath, os.FileMode(0755)); err != nil {
+	if err = os.Chmod(leaderStartPath, os.FileMode(0755)); err != nil {
+		return fmt.Errorf("failed to chmod scripts: %s", err)
+	}
+
+	// copy leader-stop.sh from config-map to scripts mount.
+	leaderStopPath := path.Join(scriptsPath, "leader-stop.sh")
+	if err = copyFile(path.Join(configMapPath, "leader-stop.sh"), leaderStopPath); err != nil {
+		return fmt.Errorf("failed to copy scripts: %s", err)
+	}
+	if err = os.Chmod(leaderStopPath, os.FileMode(0755)); err != nil {
 		return fmt.Errorf("failed to chmod scripts: %s", err)
 	}
 
