@@ -66,7 +66,7 @@ func runInitCommand(cfg *Config) error {
 	}
 
 	// build init.sql.
-	initSqlPath := path.Join(extraConfPath, "init.sql")
+	initSqlPath := path.Join(initFilePath, "init.sql")
 	if err = ioutil.WriteFile(initSqlPath, buildInitSql(cfg), 0644); err != nil {
 		return fmt.Errorf("failed to write init.sql: %s", err)
 	}
@@ -141,10 +141,6 @@ func buildExtraConfig(cfg *Config) (*ini.File, error) {
 		return nil, err
 	}
 
-	if _, err := sec.NewKey("init-file", extraConfPath+"/init.sql"); err != nil {
-		return nil, err
-	}
-
 	return conf, nil
 }
 
@@ -216,7 +212,8 @@ func buildXenonConf(cfg *Config) []byte {
 }
 
 func buildInitSql(cfg *Config) []byte {
-	sql := fmt.Sprintf(`SET @@SESSION.SQL_LOG_BIN=0;
+	sql := fmt.Sprintf(`RESET MASTER;
+SET @@SESSION.SQL_LOG_BIN=0;
 DELETE FROM mysql.user WHERE user IN ('%s', '%s');
 GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* to '%s'@'%%' IDENTIFIED BY '%s';
 `, cfg.ReplicationUser, cfg.MetricsUser, cfg.ReplicationUser, cfg.ReplicationPassword)
@@ -226,7 +223,7 @@ GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* to '%s'@'%%' IDENTIFIED BY '%
 `, cfg.MetricsUser, cfg.MetricsPassword)
 	}
 
-	sql += "flush privileges;"
+	sql += `FLUSH PRIVILEGES;`
 
 	return utils.StringToBytes(sql)
 }

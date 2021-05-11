@@ -135,6 +135,10 @@ func (c *initSidecar) getVolumeMounts() []core.VolumeMount {
 			Name:      utils.XenonVolumeName,
 			MountPath: utils.XenonVolumeMountPath,
 		},
+		{
+			Name:      utils.InitFileVolumeName,
+			MountPath: utils.InitFileVolumeMountPath,
+		},
 	}
 
 	if c.Spec.MysqlOpts.InitTokuDB {

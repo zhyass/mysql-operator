@@ -54,22 +54,24 @@ const (
 	ReplicationUser = "qc_repl"
 
 	// volumes names
-	ConfVolumeName    = "conf"
-	ConfMapVolumeName = "config-map"
-	LogsVolumeName    = "logs"
-	DataVolumeName    = "data"
-	SysVolumeName     = "host-sys"
-	ScriptsVolumeName = "scripts"
-	XenonVolumeName   = "xenon"
+	ConfVolumeName     = "conf"
+	ConfMapVolumeName  = "config-map"
+	LogsVolumeName     = "logs"
+	DataVolumeName     = "data"
+	SysVolumeName      = "host-sys"
+	ScriptsVolumeName  = "scripts"
+	XenonVolumeName    = "xenon"
+	InitFileVolumeName = "init-mysql"
 
 	// volumes mount path.
-	ConfVolumeMountPath    = "/etc/mysql"
-	ConfMapVolumeMountPath = "/mnt/config-map"
-	LogsVolumeMountPath    = "/var/log/mysql"
-	DataVolumeMountPath    = "/var/lib/mysql"
-	SysVolumeMountPath     = "/host-sys"
-	ScriptsVolumeMountPath = "/scripts"
-	XenonVolumeMountPath   = "/etc/xenon"
+	ConfVolumeMountPath     = "/etc/mysql"
+	ConfMapVolumeMountPath  = "/mnt/config-map"
+	LogsVolumeMountPath     = "/var/log/mysql"
+	DataVolumeMountPath     = "/var/lib/mysql"
+	SysVolumeMountPath      = "/host-sys"
+	ScriptsVolumeMountPath  = "/scripts"
+	XenonVolumeMountPath    = "/etc/xenon"
+	InitFileVolumeMountPath = "/docker-entrypoint-initdb.d"
 )
 
 // ResourceName is the type for aliasing resources that will be created.

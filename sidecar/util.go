@@ -34,6 +34,7 @@ var (
 	scriptsPath         = utils.ScriptsVolumeMountPath
 	sysPath             = utils.SysVolumeMountPath
 	xenonPath           = utils.XenonVolumeMountPath
+	initFilePath        = utils.InitFileVolumeMountPath
 )
 
 // copyFile the src file to dst.
