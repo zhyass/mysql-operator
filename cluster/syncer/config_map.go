@@ -110,7 +110,7 @@ func convertMapToKVConfig(m map[string]string) map[string]intstr.IntOrString {
 	config := make(map[string]intstr.IntOrString)
 
 	for key, value := range m {
-		config[key] = intstr.Parse(value)
+		config[key] = intstr.FromString(value)
 	}
 
 	return config
