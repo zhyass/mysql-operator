@@ -222,9 +222,11 @@ GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* to '%s'@'%%' IDENTIFIED BY '%
 `, cfg.ReplicationUser, cfg.MetricsUser, cfg.ReplicationUser, cfg.ReplicationPassword)
 
 	if len(cfg.MetricsUser) > 0 {
-		sql = fmt.Sprintf(`GRANT SELECT, PROCESS, REPLICATION CLIENT ON *.* to '%s'@'localhost' IDENTIFIED BY '%s';
-		`, cfg.MetricsUser, cfg.MetricsPassword)
+		sql += fmt.Sprintf(`GRANT SELECT, PROCESS, REPLICATION CLIENT ON *.* to '%s'@'localhost' IDENTIFIED BY '%s';
+`, cfg.MetricsUser, cfg.MetricsPassword)
 	}
+
+	sql += "flush privileges;"
 
 	return utils.StringToBytes(sql)
 }
