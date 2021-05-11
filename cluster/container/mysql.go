@@ -42,6 +42,15 @@ func (c *mysql) getArgs() []string {
 }
 
 func (c *mysql) getEnvVars() []core.EnvVar {
+	if c.Spec.MysqlOpts.InitTokuDB {
+		return []core.EnvVar{
+			{
+				Name:  "INIT_TOKUDB",
+				Value: "1",
+			},
+		}
+	}
+
 	return nil
 }
 

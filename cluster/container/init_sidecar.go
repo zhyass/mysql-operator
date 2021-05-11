@@ -77,8 +77,14 @@ func (c *initSidecar) getEnvVars() []core.EnvVar {
 		getEnvVarFromSecret(sctName, "MYSQL_ROOT_PASSWORD", "root-password", false),
 		getEnvVarFromSecret(sctName, "MYSQL_REPL_USER", "replication-user", true),
 		getEnvVarFromSecret(sctName, "MYSQL_REPL_PASSWORD", "replication-password", true),
-		getEnvVarFromSecret(sctName, "METRICS_USER", "metrics-user", true),
-		getEnvVarFromSecret(sctName, "METRICS_PASSWORD", "metrics-password", true),
+	}
+
+	if c.Spec.MetricsOpts.Enabled {
+		envs = append(
+			envs,
+			getEnvVarFromSecret(sctName, "METRICS_USER", "metrics-user", true),
+			getEnvVarFromSecret(sctName, "METRICS_PASSWORD", "metrics-password", true),
+		)
 	}
 
 	if c.Spec.MysqlOpts.InitTokuDB {

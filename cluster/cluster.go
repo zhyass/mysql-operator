@@ -101,7 +101,7 @@ func (c *Cluster) CreatePeers() string {
 		if i > 0 {
 			str += ","
 		}
-		str += c.GetPodHostName(i)
+		str += fmt.Sprintf("%s:%d", c.GetPodHostName(i), utils.XenonPort)
 	}
 	return str
 }
