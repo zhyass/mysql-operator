@@ -81,8 +81,6 @@ var mysqlCommonConfigs = map[string]string{
 	"audit_log_policy":                                "NONE",
 	"audit_log_rotate_on_size":                        "104857600",
 	"audit_log_rotations":                             "6",
-	"validate_password_policy":                        "MEDIUM",
-	"validate_password_length":                        "8",
 	"connection_control_failed_connections_threshold": "3",
 	"connection_control_min_connection_delay":         "1000",
 	"connection_control_max_connection_delay":         "2147483647",
