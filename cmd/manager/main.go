@@ -71,7 +71,7 @@ func main() {
 		Port:                   9443,
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
-		LeaderElectionID:       "9e46c97c.radondb.io",
+		LeaderElectionID:       "radondb-mysql-operator-leader-election",
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")

@@ -8,4 +8,4 @@ webhook:
   port: 9443
 leaderElection:
   leaderElect: true
-  resourceName: 9e46c97c.radondb.io
+  resourceName: radondb-mysql-operator-leader-election
