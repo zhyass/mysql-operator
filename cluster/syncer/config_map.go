@@ -65,6 +65,8 @@ func buildMysqlConf(c *cluster.Cluster) (string, error) {
 	cfg := ini.Empty(ini.LoadOptions{IgnoreInlineComment: true})
 	sec := cfg.Section("mysqld")
 
+	c.EnsureMysqlConf()
+
 	addKVConfigsToSection(sec, convertMapToKVConfig(mysqlSysConfigs), convertMapToKVConfig(mysqlCommonConfigs),
 		convertMapToKVConfig(mysqlStaticConfigs), c.Spec.MysqlOpts.MysqlConf)
 

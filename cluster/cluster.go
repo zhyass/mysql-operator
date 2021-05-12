@@ -18,14 +18,24 @@ package cluster
 
 import (
 	"fmt"
+	"math"
 
 	core "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
 	mysqlv1 "github.com/zhyass/mysql-operator/api/v1"
 	"github.com/zhyass/mysql-operator/utils"
+)
+
+// nolint: megacheck, deadcode, varcheck
+const (
+	_        = iota // ignore first value by assigning to blank identifier
+	kb int64 = 1 << (10 * iota)
+	mb
+	gb
 )
 
 type Cluster struct {
@@ -224,4 +234,33 @@ func (c *Cluster) GetNameForResource(name utils.ResourceName) string {
 	default:
 		return c.Name
 	}
+}
+
+func (c *Cluster) EnsureMysqlConf() {
+	if len(c.Spec.MysqlOpts.MysqlConf) == 0 {
+		c.Spec.MysqlOpts.MysqlConf = make(mysqlv1.MysqlConf)
+	}
+
+	var defaultSize, maxSize, innodbBufferPoolSize int64
+	innodbBufferPoolSize = 128 * mb
+	conf, ok := c.Spec.MysqlOpts.MysqlConf["innodb_buffer_pool_size"]
+	mem := c.Spec.MysqlOpts.Resources.Requests.Memory().Value()
+	cpu := c.Spec.PodSpec.Resources.Limits.Cpu().MilliValue()
+	if mem <= 1*gb {
+		defaultSize = int64(0.45 * float64(mem))
+		maxSize = int64(0.6 * float64(mem))
+	} else {
+		defaultSize = int64(0.6 * float64(mem))
+		maxSize = int64(0.8 * float64(mem))
+	}
+
+	if !ok {
+		innodbBufferPoolSize = utils.Max(defaultSize, innodbBufferPoolSize)
+	} else {
+		innodbBufferPoolSize = utils.Min(utils.Max(int64(conf.IntVal), innodbBufferPoolSize), maxSize)
+	}
+
+	instances := math.Max(math.Min(math.Ceil(float64(cpu)/float64(1000)), math.Floor(float64(innodbBufferPoolSize)/float64(gb))), 1)
+	c.Spec.MysqlOpts.MysqlConf["innodb_buffer_pool_size"] = intstr.FromInt(int(innodbBufferPoolSize))
+	c.Spec.MysqlOpts.MysqlConf["innodb_buffer_pool_instances"] = intstr.FromInt(int(instances))
 }
