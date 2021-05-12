@@ -967,7 +967,7 @@ spec:
                 default:
                   admitDefeatHearbeatCount: 5
                   electionTimeout: 10000
-                  image: xenondb/xenon:1.1.5-alpha
+                  image: zhyass/xenon:1.1.5
                   resources:
                     limits:
                       cpu: 100m

@@ -43,7 +43,7 @@ type ClusterSpec struct {
 
 	// XenonOpts is the options of xenon container.
 	// +optional
-	// +kubebuilder:default:={image: "xenondb/xenon:1.1.5-alpha", admitDefeatHearbeatCount: 5, electionTimeout: 10000, resources: {limits: {cpu: "100m", memory: "256Mi"}, requests: {cpu: "50m", memory: "128Mi"}}}
+	// +kubebuilder:default:={image: "zhyass/xenon:1.1.5", admitDefeatHearbeatCount: 5, electionTimeout: 10000, resources: {limits: {cpu: "100m", memory: "256Mi"}, requests: {cpu: "50m", memory: "128Mi"}}}
 	XenonOpts XenonOpts `json:"xenonOpts,omitempty"`
 
 	// +optional
