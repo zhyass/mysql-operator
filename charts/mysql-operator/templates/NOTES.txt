@@ -1,0 +1,10 @@
+You can create a new cluster by issuing:
+
+cat <<EOF | kubectl apply -f-
+apiVersion: mysql.radondb.io/v1
+kind: Cluster
+metadata:
+  name: cluster
+spec:
+  replicas: 3
+EOF
