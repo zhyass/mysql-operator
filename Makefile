@@ -30,6 +30,8 @@ BUNDLE_IMG ?= controller-bundle:$(VERSION)
 
 # Image URL to use all building/pushing image targets
 IMG ?= controller:latest
+SIDECAR_IMG ?= sidecar:latest
+XENON_IMG ?= xenon:latest
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
 
@@ -82,15 +84,20 @@ test: manifests generate fmt vet ## Run tests.
 
 build: generate fmt vet ## Build manager binary.
 	go build -o bin/manager ./cmd/manager/main.go
+	go build -o bin/sidecar ./cmd/sidecar/main.go
 
 run: manifests generate fmt vet ## Run a controller from your host.
 	go run ./cmd/manager/main.go
 
 docker-build: test ## Build docker image with the manager.
 	docker build -t ${IMG} .
+	docker build -f Dockerfile.sidecar -t ${SIDECAR_IMG} .
+	docker build -f hack/xenon/Dockerfile -t ${XENON_IMG} hack/xenon
 
 docker-push: ## Push docker image with the manager.
 	docker push ${IMG}
+	docker push ${SIDECAR_IMG}
+	docker push ${XENON_IMG}
 
 ##@ Deployment
 
