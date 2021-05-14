@@ -19,10 +19,10 @@ package main
 import (
 	"os"
 
-	"github.com/go-logr/zapr"
-	logf "github.com/presslabs/controller-util/log"
 	"github.com/spf13/cobra"
 	"github.com/zhyass/mysql-operator/sidecar"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
 const (
@@ -44,7 +44,7 @@ var (
 
 func main() {
 	// setup logging
-	logf.SetLogger(zapr.NewLogger(logf.RawStackdriverZapLoggerTo(os.Stderr, true)))
+	logf.SetLogger(zap.New(zap.UseDevMode(true)))
 
 	cfg := sidecar.NewConfig()
 

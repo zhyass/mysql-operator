@@ -214,13 +214,14 @@ func buildXenonConf(cfg *Config) []byte {
 func buildInitSql(cfg *Config) []byte {
 	sql := fmt.Sprintf(`RESET MASTER;
 SET @@SESSION.SQL_LOG_BIN=0;
-DELETE FROM mysql.user WHERE user IN ('%s', '%s');
+DELETE FROM mysql.user WHERE user='%s';
 GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* to '%s'@'%%' IDENTIFIED BY '%s';
-`, cfg.ReplicationUser, cfg.MetricsUser, cfg.ReplicationUser, cfg.ReplicationPassword)
+`, cfg.ReplicationUser, cfg.ReplicationUser, cfg.ReplicationPassword)
 
 	if len(cfg.MetricsUser) > 0 {
-		sql += fmt.Sprintf(`GRANT SELECT, PROCESS, REPLICATION CLIENT ON *.* to '%s'@'localhost' IDENTIFIED BY '%s';
-`, cfg.MetricsUser, cfg.MetricsPassword)
+		sql += fmt.Sprintf(`DELETE FROM mysql.user WHERE user='%s';
+GRANT SELECT, PROCESS, REPLICATION CLIENT ON *.* to '%s'@'localhost' IDENTIFIED BY '%s';
+`, cfg.MetricsUser, cfg.MetricsUser, cfg.MetricsPassword)
 	}
 
 	sql += `FLUSH PRIVILEGES;`
