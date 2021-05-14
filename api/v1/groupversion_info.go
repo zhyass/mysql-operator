@@ -15,8 +15,8 @@ limitations under the License.
 */
 
 // Package v1 contains API Schema definitions for the mysql v1 API group
-//+kubebuilder:object:generate=true
-//+groupName=mysql.radondb.io
+// +kubebuilder:object:generate=true
+// +groupName=mysql.radondb.io
 package v1
 
 import (
