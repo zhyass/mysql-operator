@@ -78,11 +78,15 @@ func NewStatefulSetSyncer(cli client.Client, c *cluster.Cluster) syncer.Interfac
 }
 
 func ensurePodSpec(c *cluster.Cluster) core.PodSpec {
+	uid := int64(1001)
 	initSidecar := container.EnsureContainer(utils.ContainerInitSidecarName, c)
 	initMysql := container.EnsureContainer(utils.ContainerInitMysqlName, c)
 	mysql := container.EnsureContainer(utils.ContainerMysqlName, c)
 	xenon := container.EnsureContainer(utils.ContainerXenonName, c)
 	slowlog := container.EnsureContainer(utils.ContainerSlowLogName, c)
+	slowlog.SecurityContext = &core.SecurityContext{
+		RunAsUser: &uid,
+	}
 	containers := []core.Container{mysql, xenon, slowlog}
 	if c.Spec.MetricsOpts.Enabled {
 		containers = append(containers, container.EnsureContainer(utils.ContainerMetricsName, c))

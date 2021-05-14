@@ -26,6 +26,9 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o bin/side
 ###############################################################################
 FROM alpine:3.13
 
+# Create a group and user
+RUN addgroup -g 1001 mysql && adduser -u 1001 -g 1001 -S mysql
+
 WORKDIR /
 COPY --from=builder /workspace/bin/sidecar /usr/local/bin/sidecar
 

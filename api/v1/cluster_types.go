@@ -43,7 +43,7 @@ type ClusterSpec struct {
 
 	// XenonOpts is the options of xenon container.
 	// +optional
-	// +kubebuilder:default:={image: "zhyass/xenon:1.1.5", admitDefeatHearbeatCount: 5, electionTimeout: 10000, resources: {limits: {cpu: "100m", memory: "256Mi"}, requests: {cpu: "50m", memory: "128Mi"}}}
+	// +kubebuilder:default:={image: "zhyass/xenon:1.1.5-alpha", admitDefeatHearbeatCount: 5, electionTimeout: 10000, resources: {limits: {cpu: "100m", memory: "256Mi"}, requests: {cpu: "50m", memory: "128Mi"}}}
 	XenonOpts XenonOpts `json:"xenonOpts,omitempty"`
 
 	// +optional
@@ -59,7 +59,7 @@ type ClusterSpec struct {
 
 	// Pod extra specification
 	// +optional
-	// +kubebuilder:default:={imagePullPolicy: "IfNotPresent", serviceAccountName: "mysql", resources: {limits: {cpu: "100m", memory: "128Mi"}, requests: {cpu: "10m", memory: "32Mi"}}, sidecarImage: "zhyass/sidecar:0.0.1"}
+	// +kubebuilder:default:={imagePullPolicy: "IfNotPresent", serviceAccountName: "mysql", resources: {limits: {cpu: "100m", memory: "128Mi"}, requests: {cpu: "10m", memory: "32Mi"}}, sidecarImage: "zhyass/sidecar:0.1"}
 	PodSpec PodSpec `json:"podSpec,omitempty"`
 
 	// PVC extra specifiaction
@@ -108,7 +108,7 @@ type MysqlOpts struct {
 type XenonOpts struct {
 	// To specify the image that will be used for xenon container.
 	// +optional
-	// +kubebuilder:default:="zhyass/xenon:1.1.5"
+	// +kubebuilder:default:="zhyass/xenon:1.1.5-alpha"
 	Image string `json:"image,omitempty"`
 
 	// High available component admit defeat heartbeat count.
@@ -168,7 +168,7 @@ type PodSpec struct {
 	Resources core.ResourceRequirements `json:"resources,omitempty"`
 
 	// +optional
-	// +kubebuilder:default:="zhyass/sidecar:0.0.1"
+	// +kubebuilder:default:="zhyass/sidecar:0.1"
 	SidecarImage string `json:"sidecarImage,omitempty"`
 }
 

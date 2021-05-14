@@ -229,7 +229,7 @@ spec:
                       cpu: 10m
                       memory: 32Mi
                   serviceAccountName: mysql
-                  sidecarImage: zhyass/sidecar:0.0.1
+                  sidecarImage: zhyass/sidecar:0.1
                 description: Pod extra specification
                 properties:
                   affinity:
@@ -910,7 +910,7 @@ spec:
                     minLength: 1
                     type: string
                   sidecarImage:
-                    default: zhyass/sidecar:0.0.1
+                    default: zhyass/sidecar:0.1
                     type: string
                   tolerations:
                     items:
@@ -967,7 +967,7 @@ spec:
                 default:
                   admitDefeatHearbeatCount: 5
                   electionTimeout: 10000
-                  image: zhyass/xenon:1.1.5
+                  image: zhyass/xenon:1.1.5-alpha
                   resources:
                     limits:
                       cpu: 100m
@@ -989,7 +989,7 @@ spec:
                     format: int32
                     type: integer
                   image:
-                    default: zhyass/xenon:1.1.5
+                    default: zhyass/xenon:1.1.5-alpha
                     description: To specify the image that will be used for xenon
                       container.
                     type: string

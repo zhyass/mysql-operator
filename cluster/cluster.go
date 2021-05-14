@@ -139,7 +139,7 @@ func (c *Cluster) EnsureVolumes() []core.Volume {
 				Name: utils.SysVolumeName,
 				VolumeSource: core.VolumeSource{
 					HostPath: &core.HostPathVolumeSource{
-						Path: "/sys",
+						Path: "/sys/kernel/mm/transparent_hugepage",
 					},
 				},
 			},

@@ -101,7 +101,7 @@ func runInitCommand(cfg *Config) error {
 
 	// for install tokudb.
 	if cfg.InitTokuDB {
-		arg := fmt.Sprintf("echo never > %s/kernel/mm/transparent_hugepage/enabled", sysPath)
+		arg := fmt.Sprintf("echo never > %s/enabled", sysPath)
 		cmd := exec.Command("sh", "-c", arg)
 		cmd.Stderr = os.Stderr
 		if err = cmd.Run(); err != nil {
@@ -113,6 +113,11 @@ func runInitCommand(cfg *Config) error {
 	xenonFilePath := path.Join(xenonPath, "xenon.json")
 	if err = ioutil.WriteFile(xenonFilePath, buildXenonConf(cfg), 0644); err != nil {
 		return fmt.Errorf("failed to write xenon.json: %s", err)
+	}
+
+	// chown
+	if err = os.Chown(dataPath, 1001, 1001); err != nil {
+		return fmt.Errorf("failed to chown %s: %s", dataPath, err)
 	}
 
 	log.Info("init command success")
