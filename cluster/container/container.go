@@ -25,7 +25,7 @@ import (
 type container interface {
 	getName() string
 	getImage() string
-	getArgs() []string
+	getCommand() []string
 	getEnvVars() []core.EnvVar
 	getLifecycle() *core.Lifecycle
 	getResources() core.ResourceRequirements
@@ -50,13 +50,15 @@ func EnsureContainer(name string, c *cluster.Cluster) core.Container {
 		ctr = &metrics{c, name}
 	case utils.ContainerSlowLogName:
 		ctr = &slowLog{c, name}
+	case utils.ContainerAuditLogName:
+		ctr = &auditLog{c, name}
 	}
 
 	return core.Container{
 		Name:            ctr.getName(),
 		Image:           ctr.getImage(),
 		ImagePullPolicy: c.Spec.PodSpec.ImagePullPolicy,
-		Args:            ctr.getArgs(),
+		Command:         ctr.getCommand(),
 		Env:             ctr.getEnvVars(),
 		Lifecycle:       ctr.getLifecycle(),
 		Resources:       ctr.getResources(),

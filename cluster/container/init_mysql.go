@@ -37,7 +37,7 @@ func (c *initMysql) getImage() string {
 	return img
 }
 
-func (c *initMysql) getArgs() []string {
+func (c *initMysql) getCommand() []string {
 	return nil
 }
 

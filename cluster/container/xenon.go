@@ -38,7 +38,7 @@ func (c *xenon) getImage() string {
 	return c.Spec.XenonOpts.Image
 }
 
-func (c *xenon) getArgs() []string {
+func (c *xenon) getCommand() []string {
 	return nil
 }
 

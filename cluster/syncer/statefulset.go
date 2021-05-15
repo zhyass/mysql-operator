@@ -78,21 +78,25 @@ func NewStatefulSetSyncer(cli client.Client, c *cluster.Cluster) syncer.Interfac
 }
 
 func ensurePodSpec(c *cluster.Cluster) core.PodSpec {
-	uid := int64(1001)
 	initSidecar := container.EnsureContainer(utils.ContainerInitSidecarName, c)
 	initMysql := container.EnsureContainer(utils.ContainerInitMysqlName, c)
+	initContainers := []core.Container{initSidecar, initMysql}
+
 	mysql := container.EnsureContainer(utils.ContainerMysqlName, c)
 	xenon := container.EnsureContainer(utils.ContainerXenonName, c)
-	slowlog := container.EnsureContainer(utils.ContainerSlowLogName, c)
-	slowlog.SecurityContext = &core.SecurityContext{
-		RunAsUser: &uid,
-	}
-	containers := []core.Container{mysql, xenon, slowlog}
+	containers := []core.Container{mysql, xenon}
 	if c.Spec.MetricsOpts.Enabled {
 		containers = append(containers, container.EnsureContainer(utils.ContainerMetricsName, c))
 	}
+	if c.Spec.PodSpec.SlowLogTail {
+		containers = append(containers, container.EnsureContainer(utils.ContainerSlowLogName, c))
+	}
+	if c.Spec.PodSpec.SlowLogTail {
+		containers = append(containers, container.EnsureContainer(utils.ContainerAuditLogName, c))
+	}
+
 	return core.PodSpec{
-		InitContainers:     []core.Container{initSidecar, initMysql},
+		InitContainers:     initContainers,
 		Containers:         containers,
 		Volumes:            c.EnsureVolumes(),
 		SchedulerName:      c.Spec.PodSpec.SchedulerName,

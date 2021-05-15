@@ -220,11 +220,9 @@ spec:
                 type: object
               podSpec:
                 default:
+                  busyboxImage: busybox:1.32
                   imagePullPolicy: IfNotPresent
                   resources:
-                    limits:
-                      cpu: 100m
-                      memory: 128Mi
                     requests:
                       cpu: 10m
                       memory: 32Mi
@@ -853,6 +851,12 @@ spec:
                     additionalProperties:
                       type: string
                     type: object
+                  auditLogTail:
+                    default: false
+                    type: boolean
+                  busyboxImage:
+                    default: busybox:1.32
+                    type: string
                   imagePullPolicy:
                     default: IfNotPresent
                     description: PullPolicy describes a policy for if/when to pull
@@ -870,9 +874,6 @@ spec:
                     type: string
                   resources:
                     default:
-                      limits:
-                        cpu: 100m
-                        memory: 128Mi
                       requests:
                         cpu: 10m
                         memory: 32Mi
@@ -912,6 +913,9 @@ spec:
                   sidecarImage:
                     default: zhyass/sidecar:0.1
                     type: string
+                  slowLogTail:
+                    default: false
+                    type: boolean
                   tolerations:
                     items:
                       description: The pod this Toleration is attached to tolerates

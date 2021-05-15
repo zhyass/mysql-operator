@@ -22,49 +22,49 @@ import (
 	core "k8s.io/api/core/v1"
 )
 
-type slowLog struct {
+type auditLog struct {
 	*cluster.Cluster
 
 	name string
 }
 
-func (c *slowLog) getName() string {
+func (c *auditLog) getName() string {
 	return c.name
 }
 
-func (c *slowLog) getImage() string {
-	return c.Spec.PodSpec.SidecarImage
+func (c *auditLog) getImage() string {
+	return c.Spec.PodSpec.BusyboxImage
 }
 
-func (c *slowLog) getCommand() []string {
-	return []string{"tail", "-f", utils.LogsVolumeMountPath + "/mysql-slow.log"}
+func (c *auditLog) getCommand() []string {
+	return []string{"tail", "-f", utils.LogsVolumeMountPath + "/mysql-audit.log"}
 }
 
-func (c *slowLog) getEnvVars() []core.EnvVar {
+func (c *auditLog) getEnvVars() []core.EnvVar {
 	return nil
 }
 
-func (c *slowLog) getLifecycle() *core.Lifecycle {
+func (c *auditLog) getLifecycle() *core.Lifecycle {
 	return nil
 }
 
-func (c *slowLog) getResources() core.ResourceRequirements {
+func (c *auditLog) getResources() core.ResourceRequirements {
 	return c.Spec.PodSpec.Resources
 }
 
-func (c *slowLog) getPorts() []core.ContainerPort {
+func (c *auditLog) getPorts() []core.ContainerPort {
 	return nil
 }
 
-func (c *slowLog) getLivenessProbe() *core.Probe {
+func (c *auditLog) getLivenessProbe() *core.Probe {
 	return nil
 }
 
-func (c *slowLog) getReadinessProbe() *core.Probe {
+func (c *auditLog) getReadinessProbe() *core.Probe {
 	return nil
 }
 
-func (c *slowLog) getVolumeMounts() []core.VolumeMount {
+func (c *auditLog) getVolumeMounts() []core.VolumeMount {
 	return []core.VolumeMount{
 		{
 			Name:      utils.LogsVolumeName,

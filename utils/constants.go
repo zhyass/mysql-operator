@@ -37,10 +37,11 @@ const (
 	ContainerInitMysqlName   = "init-mysql"
 
 	// containers
-	ContainerMysqlName   = "mysql"
-	ContainerXenonName   = "xenon"
-	ContainerMetricsName = "metrics"
-	ContainerSlowLogName = "slowlog"
+	ContainerMysqlName    = "mysql"
+	ContainerXenonName    = "xenon"
+	ContainerMetricsName  = "metrics"
+	ContainerSlowLogName  = "slowlog"
+	ContainerAuditLogName = "auditlog"
 
 	MysqlPortName = "mysql"
 	MysqlPort     = 3306

@@ -38,8 +38,8 @@ func (c *initSidecar) getImage() string {
 	return c.Spec.PodSpec.SidecarImage
 }
 
-func (c *initSidecar) getArgs() []string {
-	return []string{"init"}
+func (c *initSidecar) getCommand() []string {
+	return []string{"sidecar", "init"}
 }
 
 func (c *initSidecar) getEnvVars() []core.EnvVar {

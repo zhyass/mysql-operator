@@ -37,7 +37,7 @@ func (c *metrics) getImage() string {
 	return c.Spec.MetricsOpts.Image
 }
 
-func (c *metrics) getArgs() []string {
+func (c *metrics) getCommand() []string {
 	return nil
 }
 

@@ -59,7 +59,7 @@ type ClusterSpec struct {
 
 	// Pod extra specification
 	// +optional
-	// +kubebuilder:default:={imagePullPolicy: "IfNotPresent", serviceAccountName: "mysql", resources: {limits: {cpu: "100m", memory: "128Mi"}, requests: {cpu: "10m", memory: "32Mi"}}, sidecarImage: "zhyass/sidecar:0.1"}
+	// +kubebuilder:default:={imagePullPolicy: "IfNotPresent", serviceAccountName: "mysql", resources: {requests: {cpu: "10m", memory: "32Mi"}}, sidecarImage: "zhyass/sidecar:0.1", busyboxImage: "busybox:1.32"}
 	PodSpec PodSpec `json:"podSpec,omitempty"`
 
 	// PVC extra specifiaction
@@ -164,12 +164,24 @@ type PodSpec struct {
 	ServiceAccountName string `json:"serviceAccountName,omitempty"`
 
 	// +optional
-	// +kubebuilder:default:={limits: {cpu: "100m", memory: "128Mi"}, requests: {cpu: "10m", memory: "32Mi"}}
+	// +kubebuilder:default:={requests: {cpu: "10m", memory: "32Mi"}}
 	Resources core.ResourceRequirements `json:"resources,omitempty"`
 
 	// +optional
 	// +kubebuilder:default:="zhyass/sidecar:0.1"
 	SidecarImage string `json:"sidecarImage,omitempty"`
+
+	// +optional
+	// +kubebuilder:default:="busybox:1.32"
+	BusyboxImage string `json:"busyboxImage,omitempty"`
+
+	// +optional
+	// +kubebuilder:default:=false
+	SlowLogTail bool `json:"slowLogTail,omitempty"`
+
+	// +optional
+	// +kubebuilder:default:=false
+	AuditLogTail bool `json:"auditLogTail,omitempty"`
 }
 
 // Persistence is the desired spec for storing mysql data. Only one of its
