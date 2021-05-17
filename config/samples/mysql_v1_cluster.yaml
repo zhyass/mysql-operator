@@ -3,7 +3,6 @@ kind: Cluster
 metadata:
   name: cluster
 spec:
-  # Add fields here
   replicas: 3
   mysqlVersion: "5.7"
 
@@ -75,5 +74,5 @@ spec:
     enabled: true
     accessModes:
     - ReadWriteOnce
-    storageClass: "-"
+    #storageClass: ""
     size: 10Gi

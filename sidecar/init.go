@@ -225,7 +225,7 @@ GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* to '%s'@'%%' IDENTIFIED BY '%
 
 	if len(cfg.MetricsUser) > 0 {
 		sql += fmt.Sprintf(`DELETE FROM mysql.user WHERE user='%s';
-GRANT SELECT, PROCESS, REPLICATION CLIENT ON *.* to '%s'@'localhost' IDENTIFIED BY '%s';
+GRANT SELECT, PROCESS, REPLICATION CLIENT ON *.* to '%s'@'127.0.0.1' IDENTIFIED BY '%s';
 `, cfg.MetricsUser, cfg.MetricsUser, cfg.MetricsPassword)
 	}
 
