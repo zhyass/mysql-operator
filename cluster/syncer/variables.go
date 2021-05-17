@@ -17,6 +17,7 @@ limitations under the License.
 package syncer
 
 import (
+	"github.com/zhyass/mysql-operator/utils"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -48,7 +49,7 @@ var mysqlSysConfigs = map[string]string{
 	"tmp_table_size":                     "32M",
 	"tmpdir":                             "/var/lib/mysql",
 	"audit_log_file":                     "/var/log/mysql/mysql-audit.log",
-	"audit_log_exclude_accounts":         "\"root@localhost,root@127.0.0.1,qc_repl@%,qc_metrics@%\"",
+	"audit_log_exclude_accounts":         "\"root@localhost,root@127.0.0.1," + utils.ReplicationUser + "@%," + utils.MetricsUser + "@127.0.0.1\"",
 	"audit_log_buffer_size":              "16M",
 }
 

@@ -53,6 +53,7 @@ const (
 	XenonPort     = 8801
 
 	ReplicationUser = "qc_repl"
+	MetricsUser     = "qc_metrics"
 
 	// volumes names
 	ConfVolumeName     = "conf"

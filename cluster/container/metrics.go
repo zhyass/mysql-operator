@@ -42,14 +42,8 @@ func (c *metrics) getCommand() []string {
 }
 
 func (c *metrics) getEnvVars() []core.EnvVar {
-	sctName := c.GetNameForResource(utils.Secret)
 	return []core.EnvVar{
-		getEnvVarFromSecret(sctName, "METRICS_USER", "metrics-user", true),
-		getEnvVarFromSecret(sctName, "METRICS_PASSWORD", "metrics-password", true),
-		{
-			Name:  "DATA_SOURCE_NAME",
-			Value: "$(METRICS_USER):$(METRICS_PASSWORD)@(localhost:3306)/",
-		},
+		getEnvVarFromSecret(c.GetNameForResource(utils.Secret), "DATA_SOURCE_NAME", "data-source", true),
 	}
 }
 

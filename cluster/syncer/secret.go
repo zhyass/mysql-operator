@@ -17,6 +17,8 @@ limitations under the License.
 package syncer
 
 import (
+	"fmt"
+
 	"github.com/presslabs/controller-util/rand"
 	"github.com/presslabs/controller-util/syncer"
 	core "k8s.io/api/core/v1"
@@ -49,10 +51,13 @@ func NewSecretSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface {
 		}
 
 		if c.Spec.MetricsOpts.Enabled {
-			secret.Data["metrics-user"] = []byte("qc_metrics")
+			secret.Data["metrics-user"] = []byte(utils.MetricsUser)
 			if err := addRandomPassword(secret.Data, "metrics-password"); err != nil {
 				return err
 			}
+
+			dataSource := fmt.Sprintf("%s:%s@(localhost:3306)/", utils.MetricsUser, utils.BytesToString(secret.Data["metrics-password"]))
+			secret.Data["data-source"] = []byte(dataSource)
 		}
 
 		secret.Data["replication-user"] = []byte(utils.ReplicationUser)
@@ -72,7 +77,7 @@ func NewSecretSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface {
 // addRandomPassword checks if a key exists and if not registers a random string for that key
 func addRandomPassword(data map[string][]byte, key string) error {
 	if len(data[key]) == 0 {
-		// NOTE: use only alpha-numeric string, this strings are used unescaped in MySQL queries (issue #314)
+		// NOTE: use only alpha-numeric string, this strings are used unescaped in MySQL queries.
 		random, err := rand.AlphaNumericString(rStrLen)
 		if err != nil {
 			return err

@@ -2,7 +2,7 @@
 #  Build Xenon
 ###############################################################################
 
-FROM golang:1.13-buster as builder
+FROM golang:1.15 as builder
 
 ARG XENON_BRANCH=feature_adapt_k8s
 RUN set -ex; \
