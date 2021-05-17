@@ -1,7 +1,7 @@
 apiVersion: mysql.radondb.io/v1
 kind: Cluster
 metadata:
-  name: cluster
+  name: sample
 spec:
   replicas: 3
   mysqlVersion: "5.7"
