@@ -22,7 +22,7 @@ import (
 )
 
 // log is for logging in this package.
-var log = logf.Log.WithName("cluster-syncer")
+var log = logf.Log.WithName("cluster.syncer")
 
 var mysqlSysConfigs = map[string]string{
 	"default-time-zone":                  "+08:00",

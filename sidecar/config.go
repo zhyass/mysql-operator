@@ -17,9 +17,7 @@ limitations under the License.
 package sidecar
 
 import (
-	"fmt"
 	"strconv"
-	"strings"
 
 	"github.com/blang/semver"
 	"github.com/zhyass/mysql-operator/utils"
@@ -89,19 +87,4 @@ func NewConfig() *Config {
 		AdmitDefeatHearbeatCount: int32(admitDefeatHearbeatCount),
 		ElectionTimeout:          int32(electionTimeout),
 	}
-}
-
-// Generate mysql server-id from pod ordinal index.
-func (cfg *Config) generateServerID() int {
-	l := strings.Split(cfg.HostName, "-")
-	for i := len(l) - 1; i >= 0; i-- {
-		if o, err := strconv.ParseInt(l[i], 10, 8); err == nil {
-			return mysqlServerIDOffset + int(o)
-		}
-	}
-	return mysqlServerIDOffset
-}
-
-func (cfg *Config) getOwnHostName() string {
-	return fmt.Sprintf("%s.%s.%s", cfg.HostName, cfg.ServiceName, cfg.NameSpace)
 }

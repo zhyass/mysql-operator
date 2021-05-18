@@ -140,7 +140,10 @@ func checkIfPathExists(path string) (bool, error) {
 func buildExtraConfig(cfg *Config) (*ini.File, error) {
 	conf := ini.Empty()
 	sec := conf.Section("mysqld")
-	id := cfg.generateServerID()
+	id, err := generateServerID(cfg.HostName)
+	if err != nil {
+		return nil, err
+	}
 
 	if _, err := sec.NewKey("server-id", strconv.Itoa(id)); err != nil {
 		return nil, err
@@ -171,6 +174,8 @@ func buildXenonConf(cfg *Config) []byte {
 		masterSysVars = "sync_binlog=default;innodb_flush_log_at_trx_commit=default"
 		slaveSysVars = "sync_binlog=1000;innodb_flush_log_at_trx_commit=1"
 	}
+
+	hostName := fmt.Sprintf("%s.%s.%s", cfg.HostName, cfg.ServiceName, cfg.NameSpace)
 
 	str := fmt.Sprintf(`{
     "log": {
@@ -210,7 +215,7 @@ func buildXenonConf(cfg *Config) []byte {
         "super-idle": false
     }
 }
-`, cfg.getOwnHostName(), utils.XenonPort, cfg.ReplicationPassword, cfg.ReplicationUser, requestTimeout,
+`, hostName, utils.XenonPort, cfg.ReplicationPassword, cfg.ReplicationUser, requestTimeout,
 		pingTimeout, cfg.RootPassword, version, masterSysVars, slaveSysVars, cfg.ElectionTimeout,
 		cfg.AdmitDefeatHearbeatCount, heartbeatTimeout)
 	return utils.StringToBytes(str)
