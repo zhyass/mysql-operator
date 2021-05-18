@@ -24,7 +24,9 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	mysqlv1 "github.com/zhyass/mysql-operator/api/v1"
 	"github.com/zhyass/mysql-operator/utils"
@@ -192,9 +194,9 @@ func (c *Cluster) EnsureVolumes() []core.Volume {
 	return volumes
 }
 
-func (c *Cluster) EnsureVolumeClaimTemplates() []core.PersistentVolumeClaim {
+func (c *Cluster) EnsureVolumeClaimTemplates(schema *runtime.Scheme) ([]core.PersistentVolumeClaim, error) {
 	if !c.Spec.Persistence.Enabled {
-		return nil
+		return nil, nil
 	}
 
 	if c.Spec.Persistence.StorageClass != nil {
@@ -205,7 +207,9 @@ func (c *Cluster) EnsureVolumeClaimTemplates() []core.PersistentVolumeClaim {
 
 	data := core.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: utils.DataVolumeName,
+			Name:      utils.DataVolumeName,
+			Namespace: c.Namespace,
+			Labels:    c.GetLabels(),
 		},
 		Spec: core.PersistentVolumeClaimSpec{
 			AccessModes: c.Spec.Persistence.AccessModes,
@@ -217,7 +221,12 @@ func (c *Cluster) EnsureVolumeClaimTemplates() []core.PersistentVolumeClaim {
 			StorageClassName: c.Spec.Persistence.StorageClass,
 		},
 	}
-	return []core.PersistentVolumeClaim{data}
+
+	if err := controllerutil.SetControllerReference(c.Cluster, &data, schema); err != nil {
+		return nil, fmt.Errorf("failed setting controller reference: %v", err)
+	}
+
+	return []core.PersistentVolumeClaim{data}, nil
 }
 
 // GetNameForResource returns the name of a resource from above

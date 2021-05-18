@@ -71,7 +71,9 @@ func NewStatefulSetSyncer(cli client.Client, c *cluster.Cluster) syncer.Interfac
 		obj.Spec.Template.Spec.Tolerations = c.Spec.PodSpec.Tolerations
 
 		if c.Spec.Persistence.Enabled {
-			obj.Spec.VolumeClaimTemplates = c.EnsureVolumeClaimTemplates()
+			if obj.Spec.VolumeClaimTemplates, err = c.EnsureVolumeClaimTemplates(cli.Scheme()); err != nil {
+				return err
+			}
 		}
 		return nil
 	})
