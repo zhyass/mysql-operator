@@ -45,7 +45,7 @@ func NewHeadlessSVCSyncer(cli client.Client, c *cluster.Cluster) syncer.Interfac
 		},
 	}
 
-	return syncer.NewObjectSyncer("HeadlessSVC", nil, service, cli, func() error {
+	return syncer.NewObjectSyncer("HeadlessSVC", c.Unwrap(), service, cli, func() error {
 		service.Spec.Type = "ClusterIP"
 		service.Spec.ClusterIP = "None"
 		service.Spec.Selector = labels.Set{
