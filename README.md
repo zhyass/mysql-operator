@@ -22,14 +22,6 @@ Uninstall the cluster named `sample`:
 kubectl delete clusters.mysql.radondb.io sample
 ```
 
-To delete the pvc:
-
-```shell
-kubectl delete pvc data-sample-mysql-0
-kubectl delete pvc data-sample-mysql-1
-kubectl delete pvc data-sample-mysql-2
-```
-
 Uninstall the operator name `test`:
 
 ```shell
