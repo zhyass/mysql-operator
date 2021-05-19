@@ -47,10 +47,14 @@ func NewInitCommand(cfg *Config) *cobra.Command {
 func runInitCommand(cfg *Config) error {
 	var err error
 
-	// remove lost+found.
 	if exists, _ := checkIfPathExists(dataPath); exists {
+		// remove lost+found.
 		if err := os.RemoveAll(dataPath + "/lost+found"); err != nil {
 			return fmt.Errorf("removing lost+found: %s", err)
+		}
+		// chown -R mysql:mysql /var/lib/mysql.
+		if err = os.Chown(dataPath, 1001, 1001); err != nil {
+			return fmt.Errorf("failed to chown %s: %s", dataPath, err)
 		}
 	}
 
@@ -72,12 +76,12 @@ func runInitCommand(cfg *Config) error {
 	}
 
 	// build extra.cnf.
-	serverIDConfig, err := buildExtraConfig(cfg)
+	extraConfig, err := buildExtraConfig(cfg)
 	if err != nil {
 		return fmt.Errorf("failed to build extra.cnf: %s", err)
 	}
 	// save extra.cnf to conf.d.
-	if err := serverIDConfig.SaveTo(path.Join(extraConfPath, "extra.cnf")); err != nil {
+	if err := extraConfig.SaveTo(path.Join(extraConfPath, "extra.cnf")); err != nil {
 		return fmt.Errorf("failed to save extra.cnf: %s", err)
 	}
 
@@ -113,11 +117,6 @@ func runInitCommand(cfg *Config) error {
 	xenonFilePath := path.Join(xenonPath, "xenon.json")
 	if err = ioutil.WriteFile(xenonFilePath, buildXenonConf(cfg), 0644); err != nil {
 		return fmt.Errorf("failed to write xenon.json: %s", err)
-	}
-
-	// chown
-	if err = os.Chown(dataPath, 1001, 1001); err != nil {
-		return fmt.Errorf("failed to chown %s: %s", dataPath, err)
 	}
 
 	log.Info("init command success")
