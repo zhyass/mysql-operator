@@ -21,6 +21,9 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/presslabs/controller-util/syncer"
+	apps "k8s.io/api/apps/v1"
+	core "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
@@ -78,7 +81,7 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	defer func() {
-		if err = instance.UpdateStatus(); err != nil {
+		if err = r.updateStatus(ctx, instance, err); err != nil {
 			log.Error(err, "failed to update cluster status")
 		}
 	}()
@@ -118,5 +121,12 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&mysqlv1.Cluster{}).
+		Owns(&apps.StatefulSet{}).
+		Owns(&core.ConfigMap{}).
+		Owns(&core.Service{}).
+		Owns(&rbacv1.Role{}).
+		Owns(&rbacv1.RoleBinding{}).
+		Owns(&core.ServiceAccount{}).
+		Owns(&core.Secret{}).
 		Complete(r)
 }

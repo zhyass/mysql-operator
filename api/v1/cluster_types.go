@@ -210,8 +210,8 @@ type Persistence struct {
 type ClusterConditionType string
 
 const (
-	ClusterReady ClusterConditionType = "Ready"
 	ClusterInit  ClusterConditionType = "Initializing"
+	ClusterReady ClusterConditionType = "Ready"
 	ClusterError ClusterConditionType = "Error"
 )
 
@@ -225,10 +225,38 @@ type ClusterCondition struct {
 	// LastTransitionTime
 	LastTransitionTime metav1.Time `json:"lastTransitionTime"`
 	// Reason
-	Reason string `json:"reason"`
+	Reason string `json:"reason,omitempty"`
 	// Message
-	Message string `json:"message"`
+	Message string `json:"message,omitempty"`
 }
+
+// NodeStatus defines type for status of a node into cluster.
+type NodeStatus struct {
+	Name       string          `json:"name"`
+	Conditions []NodeCondition `json:"conditions,omitempty"`
+}
+
+// NodeCondition defines type for representing node conditions.
+type NodeCondition struct {
+	Type               NodeConditionType    `json:"type"`
+	Status             core.ConditionStatus `json:"status"`
+	LastTransitionTime metav1.Time          `json:"lastTransitionTime"`
+}
+
+// NodeConditionType defines type for node condition type.
+type NodeConditionType string
+
+const (
+	// NodeConditionLagged represents if the node is marked as lagged by
+	// orchestrator.
+	NodeConditionLagged NodeConditionType = "Lagged"
+	// NodeConditionReplicating represents if the node is replicating or not.
+	NodeConditionReplicating NodeConditionType = "Replicating"
+	// NodeConditionMaster represents if the node is leader or not.
+	NodeConditionLeader NodeConditionType = "Leader"
+	// NodeConditionReadOnly repesents if the node is read only or not
+	NodeConditionReadOnly NodeConditionType = "ReadOnly"
+)
 
 // ClusterStatus defines the observed state of Cluster
 type ClusterStatus struct {
@@ -236,9 +264,11 @@ type ClusterStatus struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// ReadyNodes represents number of the nodes that are in ready state
-	ReadyNodes int `json:"readyNodes,omitempty"`
+	ReadyNodes int                  `json:"readyNodes,omitempty"`
+	State      ClusterConditionType `json:"state,omitempty"`
 	// Conditions contains the list of the cluster conditions fulfilled
 	Conditions []ClusterCondition `json:"conditions,omitempty"`
+	Nodes      []NodeStatus       `json:"nodes,omitempty"`
 }
 
 // +kubebuilder:object:root=true

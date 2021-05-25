@@ -1061,16 +1061,46 @@ spec:
                       type: string
                   required:
                   - lastTransitionTime
-                  - message
-                  - reason
                   - status
                   - type
+                  type: object
+                type: array
+              nodes:
+                items:
+                  description: NodeStatus defines type for status of a node into cluster.
+                  properties:
+                    conditions:
+                      items:
+                        description: NodeCondition defines type for representing node
+                          conditions.
+                        properties:
+                          lastTransitionTime:
+                            format: date-time
+                            type: string
+                          status:
+                            type: string
+                          type:
+                            description: NodeConditionType defines type for node condition
+                              type.
+                            type: string
+                        required:
+                        - lastTransitionTime
+                        - status
+                        - type
+                        type: object
+                      type: array
+                    name:
+                      type: string
+                  required:
+                  - name
                   type: object
                 type: array
               readyNodes:
                 description: ReadyNodes represents number of the nodes that are in
                   ready state
                 type: integer
+              state:
+                type: string
             type: object
         type: object
     served: true
