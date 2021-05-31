@@ -19,6 +19,7 @@ package cluster
 import (
 	"fmt"
 	"math"
+	"time"
 
 	core "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -26,6 +27,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	mysqlv1 "github.com/zhyass/mysql-operator/api/v1"
@@ -39,6 +41,8 @@ const (
 	mb
 	gb
 )
+
+const checkNodeStatusRetry = 3
 
 type Cluster struct {
 	*mysqlv1.Cluster
@@ -272,4 +276,115 @@ func (c *Cluster) EnsureMysqlConf() {
 	instances := math.Max(math.Min(math.Ceil(float64(cpu)/float64(1000)), math.Floor(float64(innodbBufferPoolSize)/float64(gb))), 1)
 	c.Spec.MysqlOpts.MysqlConf["innodb_buffer_pool_size"] = intstr.FromInt(int(innodbBufferPoolSize))
 	c.Spec.MysqlOpts.MysqlConf["innodb_buffer_pool_instances"] = intstr.FromInt(int(instances))
+}
+
+func (c *Cluster) UpdateNodeStatus(cli client.Client, pod *core.Pod) error {
+	sctName := c.GetNameForResource(utils.Secret)
+	svcName := c.GetNameForResource(utils.HeadlessSVC)
+	user := utils.MetricsUser
+	port := utils.MysqlPort
+	nameSpace := c.Namespace
+
+	host := fmt.Sprintf("%s.%s.%s", pod.Name, svcName, nameSpace)
+	index := c.getNodeStatusIndex(host)
+	node := c.Status.Nodes[index]
+
+	runner, err := utils.NewSQLRunner(cli, nameSpace, sctName, user, host, port)
+	if err != nil {
+		return err
+	}
+
+	isLagged, isReplicating, err := runner.CheckSlaveStatusWithRetry(checkNodeStatusRetry)
+	if err != nil {
+		node.Message = err.Error()
+	}
+
+	if isLagged {
+		node.Conditions[0].Status = core.ConditionTrue
+	} else {
+		node.Conditions[0].Status = core.ConditionFalse
+	}
+
+	if isReplicating {
+		node.Conditions[3].Status = core.ConditionTrue
+	} else {
+		node.Conditions[3].Status = core.ConditionFalse
+	}
+
+	isReadOnly, err := runner.CheckReadOnly()
+	if err != nil {
+		node.Message = err.Error()
+	} else {
+		if isReadOnly {
+			node.Conditions[2].Status = core.ConditionTrue
+		} else {
+			node.Conditions[2].Status = core.ConditionFalse
+		}
+	}
+
+	err = c.CheckRole(pod)
+	if err != nil {
+		node.Message = err.Error()
+	}
+	return nil
+}
+
+func (c *Cluster) getNodeStatusIndex(name string) int {
+	len := len(c.Status.Nodes)
+	for i := 0; i < len; i++ {
+		if c.Status.Nodes[i].Name == name {
+			return i
+		}
+	}
+
+	lastTransitionTime := metav1.NewTime(time.Now())
+	status := mysqlv1.NodeStatus{
+		Name:    name,
+		Healthy: false,
+		Conditions: []mysqlv1.NodeCondition{
+			{
+				Type:               mysqlv1.NodeConditionLagged,
+				Status:             core.ConditionUnknown,
+				LastTransitionTime: lastTransitionTime,
+			},
+			{
+				Type:               mysqlv1.NodeConditionLeader,
+				Status:             core.ConditionUnknown,
+				LastTransitionTime: lastTransitionTime,
+			},
+			{
+				Type:               mysqlv1.NodeConditionReadOnly,
+				Status:             core.ConditionUnknown,
+				LastTransitionTime: lastTransitionTime,
+			},
+			{
+				Type:               mysqlv1.NodeConditionReplicating,
+				Status:             core.ConditionUnknown,
+				LastTransitionTime: lastTransitionTime,
+			},
+		},
+	}
+	c.Status.Nodes = append(c.Status.Nodes, status)
+	return len
+}
+
+// xenoncli raft status.
+func (c *Cluster) CheckRole(pod *core.Pod) error {
+	command := "xenoncli raft status"
+	executor, err := utils.NewPodExecutor()
+	if err != nil {
+		return err
+	}
+
+	stdout, stderr, err := executor.Exec(pod, "xenon", command)
+	if err != nil {
+		return err
+	}
+
+	if stderr != "" {
+		return fmt.Errorf("run command %s in xenon failed: %s", command, stderr)
+	}
+
+	//log.
+	return fmt.Errorf("run command %s in xenon output: %s", command, stdout)
 }

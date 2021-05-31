@@ -233,6 +233,8 @@ type ClusterCondition struct {
 // NodeStatus defines type for status of a node into cluster.
 type NodeStatus struct {
 	Name       string          `json:"name"`
+	Healthy    bool            `json:"healthy"`
+	Message    string          `json:"message,omitempty"`
 	Conditions []NodeCondition `json:"conditions,omitempty"`
 }
 
@@ -247,15 +249,14 @@ type NodeCondition struct {
 type NodeConditionType string
 
 const (
-	// NodeConditionLagged represents if the node is marked as lagged by
-	// orchestrator.
+	// NodeConditionLagged represents if the node is lagged.
 	NodeConditionLagged NodeConditionType = "Lagged"
-	// NodeConditionReplicating represents if the node is replicating or not.
-	NodeConditionReplicating NodeConditionType = "Replicating"
-	// NodeConditionMaster represents if the node is leader or not.
+	// NodeConditionLeader represents if the node is leader or not.
 	NodeConditionLeader NodeConditionType = "Leader"
 	// NodeConditionReadOnly repesents if the node is read only or not
 	NodeConditionReadOnly NodeConditionType = "ReadOnly"
+	// NodeConditionReplicating represents if the node is replicating or not.
+	NodeConditionReplicating NodeConditionType = "Replicating"
 )
 
 // ClusterStatus defines the observed state of Cluster

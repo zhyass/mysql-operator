@@ -71,17 +71,20 @@ func (r *ClusterReconciler) updateStatus(ctx context.Context, c *cluster.Cluster
 
 	for _, pod := range list.Items {
 		for _, cond := range pod.Status.Conditions {
-			if cond.Type == core.PodScheduled && cond.Reason == core.PodReasonUnschedulable &&
-				cond.LastTransitionTime.Time.Before(time.Now().Add(-1*time.Minute)) {
-				clusterCondition = mysqlv1.ClusterCondition{
-					Type:               mysqlv1.ClusterError,
-					Status:             core.ConditionTrue,
-					LastTransitionTime: metav1.NewTime(time.Now()),
-					Reason:             core.PodReasonUnschedulable,
-					Message:            cond.Message,
+			switch cond.Type {
+			case core.ContainersReady:
+				c.UpdateNodeStatus(r.Client, &pod)
+			case core.PodScheduled:
+				if cond.Reason == core.PodReasonUnschedulable {
+					clusterCondition = mysqlv1.ClusterCondition{
+						Type:               mysqlv1.ClusterError,
+						Status:             core.ConditionTrue,
+						LastTransitionTime: metav1.NewTime(time.Now()),
+						Reason:             core.PodReasonUnschedulable,
+						Message:            cond.Message,
+					}
+					c.Status.State = mysqlv1.ClusterError
 				}
-				c.Status.State = mysqlv1.ClusterError
-				break
 			}
 		}
 	}

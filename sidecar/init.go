@@ -225,15 +225,11 @@ func buildInitSql(cfg *Config) []byte {
 SET @@SESSION.SQL_LOG_BIN=0;
 DELETE FROM mysql.user WHERE user='%s';
 GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* to '%s'@'%%' IDENTIFIED BY '%s';
-`, cfg.ReplicationUser, cfg.ReplicationUser, cfg.ReplicationPassword)
-
-	if len(cfg.MetricsUser) > 0 {
-		sql += fmt.Sprintf(`DELETE FROM mysql.user WHERE user='%s';
-GRANT SELECT, PROCESS, REPLICATION CLIENT ON *.* to '%s'@'127.0.0.1' IDENTIFIED BY '%s';
-`, cfg.MetricsUser, cfg.MetricsUser, cfg.MetricsPassword)
-	}
-
-	sql += `FLUSH PRIVILEGES;`
+DELETE FROM mysql.user WHERE user='%s';
+GRANT SELECT, PROCESS, REPLICATION CLIENT ON *.* to '%s'@'%%' IDENTIFIED BY '%s';
+FLUSH PRIVILEGES;
+`, cfg.ReplicationUser, cfg.ReplicationUser, cfg.ReplicationPassword,
+		cfg.MetricsUser, cfg.MetricsUser, cfg.MetricsPassword)
 
 	return utils.StringToBytes(sql)
 }

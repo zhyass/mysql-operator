@@ -44,8 +44,6 @@ func NewStatefulSetSyncer(cli client.Client, c *cluster.Cluster) syncer.Interfac
 	}
 
 	return syncer.NewObjectSyncer("StatefulSet", c.Unwrap(), obj, cli, func() error {
-		c.Status.ReadyNodes = int(obj.Status.ReadyReplicas)
-
 		obj.Spec.ServiceName = c.GetNameForResource(utils.StatefulSet)
 		obj.Spec.Replicas = c.Spec.Replicas
 		obj.Spec.Selector = metav1.SetAsLabelSelector(c.GetSelectorLabels())

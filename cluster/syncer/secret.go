@@ -50,12 +50,12 @@ func NewSecretSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface {
 			secret.Data = make(map[string][]byte)
 		}
 
-		if c.Spec.MetricsOpts.Enabled {
-			secret.Data["metrics-user"] = []byte(utils.MetricsUser)
-			if err := addRandomPassword(secret.Data, "metrics-password"); err != nil {
-				return err
-			}
+		secret.Data["metrics-user"] = []byte(utils.MetricsUser)
+		if err := addRandomPassword(secret.Data, "metrics-password"); err != nil {
+			return err
+		}
 
+		if c.Spec.MetricsOpts.Enabled {
 			dataSource := fmt.Sprintf("%s:%s@(localhost:3306)/", utils.MetricsUser, utils.BytesToString(secret.Data["metrics-password"]))
 			secret.Data["data-source"] = []byte(dataSource)
 		}
