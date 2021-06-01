@@ -59,7 +59,7 @@ func NewPodExecutor() (*PodExecutor, error) {
 	}, nil
 }
 
-func (p *PodExecutor) Exec(pod *corev1.Pod, containerName string, command ...string) (string, string, error) {
+func (p *PodExecutor) Exec(pod *corev1.Pod, containerName string, command ...string) ([]byte, []byte, error) {
 	request := p.client.RESTClient().
 		Post().
 		Resource("pods").
@@ -76,7 +76,7 @@ func (p *PodExecutor) Exec(pod *corev1.Pod, containerName string, command ...str
 
 	exec, err := remotecommand.NewSPDYExecutor(p.config, "POST", request.URL())
 	if err != nil {
-		return "", "", err
+		return nil, nil, err
 	}
 
 	stdOut := bytes.Buffer{}
@@ -89,5 +89,5 @@ func (p *PodExecutor) Exec(pod *corev1.Pod, containerName string, command ...str
 		Tty:    false,
 	})
 
-	return stdOut.String(), stdErr.String(), err
+	return stdOut.Bytes(), stdErr.Bytes(), err
 }

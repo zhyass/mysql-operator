@@ -17,6 +17,8 @@ limitations under the License.
 package cluster
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"math"
 	"time"
@@ -26,6 +28,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -278,54 +281,65 @@ func (c *Cluster) EnsureMysqlConf() {
 	c.Spec.MysqlOpts.MysqlConf["innodb_buffer_pool_instances"] = intstr.FromInt(int(instances))
 }
 
-func (c *Cluster) UpdateNodeStatus(cli client.Client, pod *core.Pod) error {
+func (c *Cluster) UpdateNodeStatus(cli client.Client, pods []core.Pod) error {
 	sctName := c.GetNameForResource(utils.Secret)
 	svcName := c.GetNameForResource(utils.HeadlessSVC)
-	user := utils.MetricsUser
 	port := utils.MysqlPort
 	nameSpace := c.Namespace
 
-	host := fmt.Sprintf("%s.%s.%s", pod.Name, svcName, nameSpace)
-	index := c.getNodeStatusIndex(host)
-	node := c.Status.Nodes[index]
-
-	runner, err := utils.NewSQLRunner(cli, nameSpace, sctName, user, host, port)
-	if err != nil {
+	secret := &core.Secret{}
+	if err := cli.Get(context.TODO(),
+		types.NamespacedName{
+			Namespace: nameSpace,
+			Name:      sctName,
+		},
+		secret,
+	); err != nil {
 		return err
 	}
-
-	isLagged, isReplicating, err := runner.CheckSlaveStatusWithRetry(checkNodeStatusRetry)
-	if err != nil {
-		node.Message = err.Error()
+	user, ok := secret.Data["metrics-user"]
+	if !ok {
+		return fmt.Errorf("failed to get the user: %s", user)
+	}
+	password, ok := secret.Data["metrics-password"]
+	if !ok {
+		return fmt.Errorf("failed to get the password: %s", password)
 	}
 
-	if isLagged {
-		node.Conditions[0].Status = core.ConditionTrue
-	} else {
-		node.Conditions[0].Status = core.ConditionFalse
-	}
+	for _, pod := range pods {
+		host := fmt.Sprintf("%s.%s.%s", pod.Name, svcName, nameSpace)
+		index := c.getNodeStatusIndex(host)
+		node := c.Status.Nodes[index]
+		node.Message = ""
+		node.Healthy = false
 
-	if isReplicating {
-		node.Conditions[3].Status = core.ConditionTrue
-	} else {
-		node.Conditions[3].Status = core.ConditionFalse
-	}
-
-	isReadOnly, err := runner.CheckReadOnly()
-	if err != nil {
-		node.Message = err.Error()
-	} else {
-		if isReadOnly {
-			node.Conditions[2].Status = core.ConditionTrue
-		} else {
-			node.Conditions[2].Status = core.ConditionFalse
+		if err := c.checkRole(&pod, &node); err != nil {
+			node.Message = err.Error()
+			continue
 		}
+
+		runner, err := utils.NewSQLRunner(utils.BytesToString(user), utils.BytesToString(password), host, port)
+		if err != nil {
+			node.Message = err.Error()
+			continue
+		}
+
+		node.Conditions[0].Status, node.Conditions[3].Status, err = runner.CheckSlaveStatusWithRetry(checkNodeStatusRetry)
+		if err != nil {
+			node.Message = err.Error()
+			continue
+		}
+
+		node.Conditions[2].Status, err = runner.CheckReadOnly()
+		if err != nil {
+			node.Message = err.Error()
+			continue
+		}
+
+		setNodeStatusHealthy(&node)
+		c.Status.Nodes[index] = node
 	}
 
-	err = c.CheckRole(pod)
-	if err != nil {
-		node.Message = err.Error()
-	}
 	return nil
 }
 
@@ -368,23 +382,47 @@ func (c *Cluster) getNodeStatusIndex(name string) int {
 	return len
 }
 
-// xenoncli raft status.
-func (c *Cluster) CheckRole(pod *core.Pod) error {
-	command := "xenoncli raft status"
+func (c *Cluster) checkRole(pod *core.Pod, node *mysqlv1.NodeStatus) error {
+	command := []string{"xenoncli", "raft", "status"}
+	node.Conditions[1].Status = core.ConditionUnknown
 	executor, err := utils.NewPodExecutor()
 	if err != nil {
 		return err
 	}
 
-	stdout, stderr, err := executor.Exec(pod, "xenon", command)
+	stdout, stderr, err := executor.Exec(pod, "xenon", command...)
 	if err != nil {
 		return err
 	}
 
-	if stderr != "" {
+	if len(stderr) != 0 {
 		return fmt.Errorf("run command %s in xenon failed: %s", command, stderr)
 	}
 
-	//log.
-	return fmt.Errorf("run command %s in xenon output: %s", command, stdout)
+	var out map[string]interface{}
+	if err = json.Unmarshal(stdout, &out); err != nil {
+		return err
+	}
+
+	if out["state"] == "FOLLOWER" {
+		node.Conditions[1].Status = core.ConditionFalse
+	} else if out["state"] == "LEADER" {
+		node.Conditions[1].Status = core.ConditionTrue
+	}
+
+	return nil
+}
+
+func setNodeStatusHealthy(node *mysqlv1.NodeStatus) {
+	if node.Conditions[0].Status == core.ConditionFalse {
+		if node.Conditions[1].Status == core.ConditionFalse &&
+			node.Conditions[2].Status == core.ConditionTrue &&
+			node.Conditions[3].Status == core.ConditionTrue {
+			node.Healthy = true
+		} else if node.Conditions[1].Status == core.ConditionTrue &&
+			node.Conditions[2].Status == core.ConditionFalse &&
+			node.Conditions[3].Status == core.ConditionFalse {
+			node.Healthy = true
+		}
+	}
 }

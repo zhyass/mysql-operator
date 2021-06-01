@@ -17,7 +17,6 @@ limitations under the License.
 package utils
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
 	"sort"
@@ -27,8 +26,6 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var (
@@ -45,23 +42,7 @@ type SQLRunner struct {
 	db *sql.DB
 }
 
-func NewSQLRunner(client client.Client, namespace, secretName, user, host string, port int) (*SQLRunner, error) {
-	secret := &corev1.Secret{}
-	if err := client.Get(context.TODO(),
-		types.NamespacedName{
-			Namespace: namespace,
-			Name:      secretName,
-		},
-		secret,
-	); err != nil {
-		return nil, err
-	}
-
-	password, ok := secret.Data[user]
-	if !ok {
-		return nil, fmt.Errorf("failed to get the user: %s", user)
-	}
-
+func NewSQLRunner(user, password, host string, port int) (*SQLRunner, error) {
 	dataSourceName := fmt.Sprintf("%s:%s@tcp(%s:%d)/?timeout=5s&interpolateParams=true",
 		user, password, host, port,
 	)
@@ -77,7 +58,7 @@ func NewSQLRunner(client client.Client, namespace, secretName, user, host string
 	return &SQLRunner{db}, nil
 }
 
-func (s *SQLRunner) CheckSlaveStatusWithRetry(retry uint32) (isLagged, isReplicating bool, err error) {
+func (s *SQLRunner) CheckSlaveStatusWithRetry(retry uint32) (isLagged, isReplicating corev1.ConditionStatus, err error) {
 	for {
 		if retry == 0 {
 			break
@@ -94,8 +75,10 @@ func (s *SQLRunner) CheckSlaveStatusWithRetry(retry uint32) (isLagged, isReplica
 	return
 }
 
-func (s *SQLRunner) checkSlaveStatus() (isLagged, isReplicating bool, err error) {
+// TODO: move to other conf.
+func (s *SQLRunner) checkSlaveStatus() (isLagged, isReplicating corev1.ConditionStatus, err error) {
 	var rows *sql.Rows
+	isLagged, isReplicating = corev1.ConditionUnknown, corev1.ConditionUnknown
 	rows, err = s.db.Query("show slave status;")
 	if err != nil {
 		return
@@ -107,7 +90,7 @@ func (s *SQLRunner) checkSlaveStatus() (isLagged, isReplicating bool, err error)
 		if err = rows.Err(); err != nil {
 			return
 		}
-		return
+		return corev1.ConditionFalse, corev1.ConditionFalse, nil
 	}
 
 	var cols []string
@@ -132,16 +115,14 @@ func (s *SQLRunner) checkSlaveStatus() (isLagged, isReplicating bool, err error)
 	secondsBehindMaster := columnValue(scanArgs, cols, "Seconds_Behind_Master")
 
 	if stringInArray(slaveIOState, errorConnectionStates) {
-		err = fmt.Errorf("Slave_IO_State: %s", slaveIOState)
-		return
+		return isLagged, corev1.ConditionFalse, fmt.Errorf("Slave_IO_State: %s", slaveIOState)
 	}
 
 	if slaveSQLRunning != "Yes" {
-		err = fmt.Errorf("SQL thread error: %s", lastSQLError)
-		return
+		return isLagged, corev1.ConditionFalse, fmt.Errorf("SQL thread error: %s", lastSQLError)
 	}
 
-	isReplicating = true
+	isReplicating = corev1.ConditionTrue
 
 	var longQueryTime float64
 	if err = s.GetGlobalVariable("long_query_time", &longQueryTime); err != nil {
@@ -150,23 +131,25 @@ func (s *SQLRunner) checkSlaveStatus() (isLagged, isReplicating bool, err error)
 
 	sec, _ := strconv.ParseFloat(secondsBehindMaster, 64)
 	if sec > longQueryTime*100 {
-		isLagged = true
+		isLagged = corev1.ConditionTrue
+	} else {
+		isLagged = corev1.ConditionFalse
 	}
 
 	return
 }
 
-func (s *SQLRunner) CheckReadOnly() (bool, error) {
+func (s *SQLRunner) CheckReadOnly() (corev1.ConditionStatus, error) {
 	var readOnly uint8
 	if err := s.GetGlobalVariable("read_only", &readOnly); err != nil {
-		return false, err
+		return corev1.ConditionUnknown, err
 	}
 
 	if readOnly == 0 {
-		return false, nil
+		return corev1.ConditionFalse, nil
 	}
 
-	return true, nil
+	return corev1.ConditionTrue, nil
 }
 
 func (sr *SQLRunner) GetGlobalVariable(param string, val interface{}) error {

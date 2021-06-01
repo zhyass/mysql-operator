@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"reflect"
 
 	"github.com/go-logr/logr"
 	"github.com/presslabs/controller-util/syncer"
@@ -53,6 +54,7 @@ type ClusterReconciler struct {
 // +kubebuilder:rbac:groups=core,resources=serviceaccounts,verbs=get;list;watch;create;update
 // +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=roles;rolebindings,verbs=get;list;watch;create;update
 // +kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=core,resources=pods/exec,verbs=create
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -80,9 +82,13 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return reconcile.Result{}, err
 	}
 
+	status := *instance.Status.DeepCopy()
 	defer func() {
-		if err = r.updateStatus(ctx, instance, err); err != nil {
-			log.Error(err, "failed to update cluster status")
+		if !reflect.DeepEqual(status, instance.Status) {
+			sErr := r.Status().Update(ctx, instance.Unwrap())
+			if sErr != nil {
+				log.Error(sErr, "failed to update cluster status")
+			}
 		}
 	}()
 
@@ -105,6 +111,7 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		clustersyncer.NewLeaderSVCSyncer(r.Client, instance),
 		clustersyncer.NewFollowerSVCSyncer(r.Client, instance),
 		clustersyncer.NewStatefulSetSyncer(r.Client, instance),
+		clustersyncer.NewStatusUpdater(r.Client, instance),
 	}
 
 	// run the syncers

@@ -38,7 +38,7 @@ type StatusUpdater struct {
 	cli client.Client
 }
 
-func NewStatusUpdater(c *cluster.Cluster, cli client.Client) *StatusUpdater {
+func NewStatusUpdater(cli client.Client, c *cluster.Cluster) *StatusUpdater {
 	return &StatusUpdater{
 		Cluster: c,
 		cli:     cli,
@@ -123,6 +123,5 @@ func (s *StatusUpdater) Sync(ctx context.Context) (syncer.SyncResult, error) {
 	}
 
 	// update ready nodes' status.
-
-	return syncer.SyncResult{}, nil
+	return syncer.SyncResult{}, s.UpdateNodeStatus(s.cli, readyNodes)
 }

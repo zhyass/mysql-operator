@@ -10,6 +10,12 @@ metadata:
     heritage: {{ .Release.Service | quote }}
 rules:
 - apiGroups:
+  - ""
+  resources:
+  - pods/exec
+  verbs:
+  - create
+- apiGroups:
   - apps
   resources:
   - statefulsets
