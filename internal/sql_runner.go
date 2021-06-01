@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package utils
+package internal
 
 import (
 	"database/sql"
@@ -75,7 +75,6 @@ func (s *SQLRunner) CheckSlaveStatusWithRetry(retry uint32) (isLagged, isReplica
 	return
 }
 
-// TODO: move to other conf.
 func (s *SQLRunner) checkSlaveStatus() (isLagged, isReplicating corev1.ConditionStatus, err error) {
 	var rows *sql.Rows
 	isLagged, isReplicating = corev1.ConditionUnknown, corev1.ConditionUnknown

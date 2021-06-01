@@ -34,6 +34,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	mysqlv1 "github.com/zhyass/mysql-operator/api/v1"
+	"github.com/zhyass/mysql-operator/internal"
 	"github.com/zhyass/mysql-operator/utils"
 )
 
@@ -318,7 +319,7 @@ func (c *Cluster) UpdateNodeStatus(cli client.Client, pods []core.Pod) error {
 			continue
 		}
 
-		runner, err := utils.NewSQLRunner(utils.BytesToString(user), utils.BytesToString(password), host, port)
+		runner, err := internal.NewSQLRunner(utils.BytesToString(user), utils.BytesToString(password), host, port)
 		if err != nil {
 			node.Message = err.Error()
 			continue
@@ -385,7 +386,7 @@ func (c *Cluster) getNodeStatusIndex(name string) int {
 func (c *Cluster) checkRole(pod *core.Pod, node *mysqlv1.NodeStatus) error {
 	command := []string{"xenoncli", "raft", "status"}
 	node.Conditions[1].Status = core.ConditionUnknown
-	executor, err := utils.NewPodExecutor()
+	executor, err := internal.NewPodExecutor()
 	if err != nil {
 		return err
 	}
