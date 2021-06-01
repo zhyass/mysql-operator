@@ -14,4 +14,9 @@ resources:
   kind: Cluster
   path: github.com/zhyass/mysql-operator/api/v1
   version: v1
+- controller: true
+  domain: radondb.io
+  group: mysql
+  kind: Status
+  version: v1
 version: "3"

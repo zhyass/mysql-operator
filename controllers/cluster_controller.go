@@ -111,7 +111,6 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		clustersyncer.NewLeaderSVCSyncer(r.Client, instance),
 		clustersyncer.NewFollowerSVCSyncer(r.Client, instance),
 		clustersyncer.NewStatefulSetSyncer(r.Client, instance),
-		clustersyncer.NewStatusUpdater(r.Client, instance),
 	}
 
 	// run the syncers
