@@ -118,7 +118,7 @@ func (s *SQLRunner) checkSlaveStatus() (isLagged, isReplicating corev1.Condition
 	}
 
 	if slaveSQLRunning != "Yes" {
-		return isLagged, corev1.ConditionFalse, fmt.Errorf("SQL thread error: %s", lastSQLError)
+		return isLagged, corev1.ConditionFalse, fmt.Errorf("Last_SQL_Error: %s", lastSQLError)
 	}
 
 	isReplicating = corev1.ConditionTrue

@@ -70,7 +70,6 @@ func (r *StatusReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	_ = r.Log.WithValues("status", req.NamespacedName)
 
 	// your logic here
-	// your logic here
 	instance := cluster.New(&mysqlv1.Cluster{})
 
 	err := r.Get(ctx, req.NamespacedName, instance.Unwrap())
@@ -94,7 +93,7 @@ func (r *StatusReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		}
 	}()
 
-	statusSyncer := clustersyncer.NewStatusUpdater(r.Client, instance)
+	statusSyncer := clustersyncer.NewStatusUpdater(log, r.Client, instance)
 	if err := syncer.Sync(ctx, statusSyncer, r.Recorder); err != nil {
 		return reconcile.Result{}, err
 	}

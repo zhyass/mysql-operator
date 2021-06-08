@@ -18,14 +18,20 @@ package syncer
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"time"
 
+	"github.com/go-logr/logr"
 	"github.com/presslabs/controller-util/syncer"
 	mysqlv1 "github.com/zhyass/mysql-operator/api/v1"
 	"github.com/zhyass/mysql-operator/cluster"
+	"github.com/zhyass/mysql-operator/internal"
+	"github.com/zhyass/mysql-operator/utils"
 	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -33,13 +39,16 @@ const maxStatusesQuantity = 10
 const checkNodeStatusRetry = 3
 
 type StatusUpdater struct {
+	log logr.Logger
+
 	*cluster.Cluster
 
 	cli client.Client
 }
 
-func NewStatusUpdater(cli client.Client, c *cluster.Cluster) *StatusUpdater {
+func NewStatusUpdater(log logr.Logger, cli client.Client, c *cluster.Cluster) *StatusUpdater {
 	return &StatusUpdater{
+		log:     log,
 		Cluster: c,
 		cli:     cli,
 	}
@@ -123,5 +132,168 @@ func (s *StatusUpdater) Sync(ctx context.Context) (syncer.SyncResult, error) {
 	}
 
 	// update ready nodes' status.
-	return syncer.SyncResult{}, s.UpdateNodeStatus(s.cli, readyNodes)
+	return syncer.SyncResult{}, s.updateNodeStatus(s.cli, readyNodes)
+}
+
+func (s *StatusUpdater) updateNodeStatus(cli client.Client, pods []core.Pod) error {
+	sctName := s.GetNameForResource(utils.Secret)
+	svcName := s.GetNameForResource(utils.HeadlessSVC)
+	port := utils.MysqlPort
+	nameSpace := s.Namespace
+
+	secret := &core.Secret{}
+	if err := cli.Get(context.TODO(),
+		types.NamespacedName{
+			Namespace: nameSpace,
+			Name:      sctName,
+		},
+		secret,
+	); err != nil {
+		return err
+	}
+	user, ok := secret.Data["metrics-user"]
+	if !ok {
+		return fmt.Errorf("failed to get the user: %s", user)
+	}
+	password, ok := secret.Data["metrics-password"]
+	if !ok {
+		return fmt.Errorf("failed to get the password: %s", password)
+	}
+
+	for _, pod := range pods {
+		host := fmt.Sprintf("%s.%s.%s", pod.Name, svcName, nameSpace)
+		index := s.getNodeStatusIndex(host)
+		node := &s.Status.Nodes[index]
+		node.Message = ""
+		node.Healthy = false
+
+		isLeader, err := checkRole(&pod)
+		if err != nil {
+			s.log.Error(err, "failed to check the node role", "node", node.Name)
+			node.Message = err.Error()
+		}
+		s.updateNodeCondition(node, 1, isLeader)
+
+		isLagged, isReplicating, isReadOnly := core.ConditionUnknown, core.ConditionUnknown, core.ConditionUnknown
+		runner, err := internal.NewSQLRunner(utils.BytesToString(user), utils.BytesToString(password), host, port)
+		if err != nil {
+			s.log.Error(err, "failed to connect the mysql", "node", node.Name)
+			node.Message = err.Error()
+		} else {
+			isLagged, isReplicating, err = runner.CheckSlaveStatusWithRetry(checkNodeStatusRetry)
+			if err != nil {
+				s.log.Error(err, "failed to check slave status", "node", node.Name)
+				node.Message = err.Error()
+			}
+
+			isReadOnly, err = runner.CheckReadOnly()
+			if err != nil {
+				s.log.Error(err, "failed to check read only", "node", node.Name)
+				node.Message = err.Error()
+			}
+		}
+		s.updateNodeCondition(node, 0, isLagged)
+		s.updateNodeCondition(node, 2, isReadOnly)
+		s.updateNodeCondition(node, 3, isReplicating)
+
+		setNodeStatusHealthy(node)
+	}
+
+	return nil
+}
+
+func (s *StatusUpdater) getNodeStatusIndex(name string) int {
+	len := len(s.Status.Nodes)
+	for i := 0; i < len; i++ {
+		if s.Status.Nodes[i].Name == name {
+			return i
+		}
+	}
+
+	lastTransitionTime := metav1.NewTime(time.Now())
+	status := mysqlv1.NodeStatus{
+		Name:    name,
+		Healthy: false,
+		Conditions: []mysqlv1.NodeCondition{
+			{
+				Type:               mysqlv1.NodeConditionLagged,
+				Status:             core.ConditionUnknown,
+				LastTransitionTime: lastTransitionTime,
+			},
+			{
+				Type:               mysqlv1.NodeConditionLeader,
+				Status:             core.ConditionUnknown,
+				LastTransitionTime: lastTransitionTime,
+			},
+			{
+				Type:               mysqlv1.NodeConditionReadOnly,
+				Status:             core.ConditionUnknown,
+				LastTransitionTime: lastTransitionTime,
+			},
+			{
+				Type:               mysqlv1.NodeConditionReplicating,
+				Status:             core.ConditionUnknown,
+				LastTransitionTime: lastTransitionTime,
+			},
+		},
+	}
+	s.Status.Nodes = append(s.Status.Nodes, status)
+	return len
+}
+
+func (s *StatusUpdater) updateNodeCondition(node *mysqlv1.NodeStatus, idx int, status core.ConditionStatus) {
+	if node.Conditions[idx].Status != status {
+		t := time.Now()
+		s.log.V(3).Info(fmt.Sprintf("Found status change for node %q condition %q: %q -> %q; setting lastTransitionTime to %v",
+			node.Name, node.Conditions[idx].Type, node.Conditions[idx].Status, status, t))
+		node.Conditions[idx].Status = status
+		node.Conditions[idx].LastTransitionTime = metav1.NewTime(t)
+	}
+}
+
+func checkRole(pod *core.Pod) (core.ConditionStatus, error) {
+	command := []string{"xenoncli", "raft", "status"}
+	status := core.ConditionUnknown
+	executor, err := internal.NewPodExecutor()
+	if err != nil {
+		return status, err
+	}
+
+	stdout, stderr, err := executor.Exec(pod, "xenon", command...)
+	if err != nil {
+		return status, err
+	}
+
+	if len(stderr) != 0 {
+		return status, fmt.Errorf("run command %s in xenon failed: %s", command, stderr)
+	}
+
+	var out map[string]interface{}
+	if err = json.Unmarshal(stdout, &out); err != nil {
+		return status, err
+	}
+
+	if out["state"] == "LEADER" {
+		return core.ConditionTrue, nil
+	}
+
+	if out["state"] == "FOLLOWER" {
+		return core.ConditionFalse, nil
+	}
+
+	return status, nil
+}
+
+func setNodeStatusHealthy(node *mysqlv1.NodeStatus) {
+	if node.Conditions[0].Status == core.ConditionFalse {
+		if node.Conditions[1].Status == core.ConditionFalse &&
+			node.Conditions[2].Status == core.ConditionTrue &&
+			node.Conditions[3].Status == core.ConditionTrue {
+			node.Healthy = true
+		} else if node.Conditions[1].Status == core.ConditionTrue &&
+			node.Conditions[2].Status == core.ConditionFalse &&
+			node.Conditions[3].Status == core.ConditionFalse {
+			node.Healthy = true
+		}
+	}
 }
