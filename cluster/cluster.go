@@ -40,8 +40,6 @@ const (
 	gb
 )
 
-const checkNodeStatusRetry = 3
-
 type Cluster struct {
 	*mysqlv1.Cluster
 }
