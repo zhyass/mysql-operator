@@ -44,7 +44,7 @@ type SQLRunner struct {
 }
 
 func NewSQLRunner(user, password, host string, port int) (*SQLRunner, error) {
-	dataSourceName := fmt.Sprintf("%s:%s@tcp(%s:%d)/?timeout=5s&interpolateParams=true",
+	dataSourceName := fmt.Sprintf("%s:%s@tcp(%s:%d)/?timeout=5s&interpolateParams=true&multiStatements=true",
 		user, password, host, port,
 	)
 	db, err := sql.Open("mysql", dataSourceName)

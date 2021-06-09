@@ -152,7 +152,8 @@ func (s *StatusUpdater) updateNodeStatus(cli client.Client, pods []core.Pod) err
 		},
 		secret,
 	); err != nil {
-		return err
+		s.log.V(1).Info("secret '%s' not found", sctName)
+		return nil
 	}
 	user, ok := secret.Data["metrics-user"]
 	if !ok {
@@ -195,14 +196,14 @@ func (s *StatusUpdater) updateNodeStatus(cli client.Client, pods []core.Pod) err
 				s.log.Error(err, "failed to check read only", "node", node.Name)
 				node.Message = err.Error()
 			}
-			if isLeader == core.ConditionTrue && isReadOnly != core.ConditionFalse {
-				query := "set global read_only=off; set global super_read_only=off;"
-				s.log.V(1).Info("try to correct the leader writeable", "node", node.Name)
-				runner.RunQuery(s.ctx, query)
-			}
 		}
 		if runner != nil {
 			runner.Close()
+		}
+
+		if isLeader == core.ConditionTrue && isReadOnly != core.ConditionFalse {
+			s.log.V(1).Info("try to correct the leader writeable", "node", node.Name)
+			correctLeaderReadOnly(&pod)
 		}
 
 		// update mysqlv1.NodeConditionLagged.
@@ -298,6 +299,20 @@ func checkRole(pod *core.Pod) (core.ConditionStatus, error) {
 	}
 
 	return status, nil
+}
+
+func correctLeaderReadOnly(pod *core.Pod) error {
+	executor, err := internal.NewPodExecutor()
+	if err != nil {
+		return err
+	}
+
+	err = executor.SetGlobalSysVar(pod, "SET GLOBAL read_only=off")
+	if err != nil {
+		return err
+	}
+
+	return executor.SetGlobalSysVar(pod, "SET GLOBAL super_read_only=off")
 }
 
 func setNodeStatusHealthy(node *mysqlv1.NodeStatus) {

@@ -19,6 +19,7 @@ package internal
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -90,4 +91,16 @@ func (p *PodExecutor) Exec(pod *corev1.Pod, containerName string, command ...str
 	})
 
 	return stdOut.Bytes(), stdErr.Bytes(), err
+}
+
+func (p *PodExecutor) SetGlobalSysVar(pod *corev1.Pod, query string) error {
+	cmd := []string{"xenoncli", "mysql", "sysvar", query}
+	_, stderr, err := p.Exec(pod, "xenon", cmd...)
+	if err != nil {
+		return err
+	}
+	if len(stderr) != 0 {
+		return fmt.Errorf("run command %s in xenon failed: %s", cmd, stderr)
+	}
+	return nil
 }
