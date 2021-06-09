@@ -17,6 +17,7 @@ limitations under the License.
 package internal
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"sort"
@@ -154,6 +155,11 @@ func (s *SQLRunner) CheckReadOnly() (corev1.ConditionStatus, error) {
 func (sr *SQLRunner) GetGlobalVariable(param string, val interface{}) error {
 	query := fmt.Sprintf("select @@global.%s", param)
 	return sr.db.QueryRow(query).Scan(val)
+}
+
+func (sr *SQLRunner) RunQuery(ctx context.Context, query string, args ...interface{}) error {
+	_, err := sr.db.ExecContext(ctx, query, args...)
+	return err
 }
 
 func (sr *SQLRunner) Close() error {

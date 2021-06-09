@@ -41,14 +41,17 @@ const checkNodeStatusRetry = 3
 type StatusUpdater struct {
 	log logr.Logger
 
+	ctx context.Context
+
 	*cluster.Cluster
 
 	cli client.Client
 }
 
-func NewStatusUpdater(log logr.Logger, cli client.Client, c *cluster.Cluster) *StatusUpdater {
+func NewStatusUpdater(log logr.Logger, ctx context.Context, cli client.Client, c *cluster.Cluster) *StatusUpdater {
 	return &StatusUpdater{
 		log:     log,
+		ctx:     ctx,
 		Cluster: c,
 		cli:     cli,
 	}
@@ -172,6 +175,7 @@ func (s *StatusUpdater) updateNodeStatus(cli client.Client, pods []core.Pod) err
 			s.log.Error(err, "failed to check the node role", "node", node.Name)
 			node.Message = err.Error()
 		}
+		// update mysqlv1.NodeConditionLeader.
 		s.updateNodeCondition(node, 1, isLeader)
 
 		isLagged, isReplicating, isReadOnly := core.ConditionUnknown, core.ConditionUnknown, core.ConditionUnknown
@@ -191,10 +195,22 @@ func (s *StatusUpdater) updateNodeStatus(cli client.Client, pods []core.Pod) err
 				s.log.Error(err, "failed to check read only", "node", node.Name)
 				node.Message = err.Error()
 			}
+			if isLeader == core.ConditionTrue && isReadOnly != core.ConditionFalse {
+				query := "set global read_only=off; set global super_read_only=off;"
+				s.log.V(1).Info("try to correct the leader writeable", "node", node.Name)
+				runner.RunQuery(s.ctx, query)
+			}
 		}
+		if runner != nil {
+			runner.Close()
+		}
+
+		// update mysqlv1.NodeConditionLagged.
 		s.updateNodeCondition(node, 0, isLagged)
-		s.updateNodeCondition(node, 2, isReadOnly)
+		// update mysqlv1.NodeConditionReplicating.
 		s.updateNodeCondition(node, 3, isReplicating)
+		// update mysqlv1.NodeConditionReadOnly.
+		s.updateNodeCondition(node, 2, isReadOnly)
 
 		setNodeStatusHealthy(node)
 	}

@@ -93,7 +93,7 @@ func (r *StatusReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		}
 	}()
 
-	statusSyncer := clustersyncer.NewStatusUpdater(log, r.Client, instance)
+	statusSyncer := clustersyncer.NewStatusUpdater(log, ctx, r.Client, instance)
 	if err := syncer.Sync(ctx, statusSyncer, r.Recorder); err != nil {
 		return reconcile.Result{}, err
 	}
