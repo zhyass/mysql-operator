@@ -41,17 +41,14 @@ const checkNodeStatusRetry = 3
 type StatusUpdater struct {
 	log logr.Logger
 
-	ctx context.Context
-
 	*cluster.Cluster
 
 	cli client.Client
 }
 
-func NewStatusUpdater(log logr.Logger, ctx context.Context, cli client.Client, c *cluster.Cluster) *StatusUpdater {
+func NewStatusUpdater(log logr.Logger, cli client.Client, c *cluster.Cluster) *StatusUpdater {
 	return &StatusUpdater{
 		log:     log,
-		ctx:     ctx,
 		Cluster: c,
 		cli:     cli,
 	}
