@@ -90,13 +90,13 @@ func (s *StatusUpdater) Sync(ctx context.Context) (syncer.SyncResult, error) {
 	}
 
 	// get ready nodes.
-	var readyNodes []core.Pod
+	var readyNodes []*core.Pod
 	for _, pod := range list.Items {
 		for _, cond := range pod.Status.Conditions {
 			switch cond.Type {
 			case core.ContainersReady:
 				if cond.Status == core.ConditionTrue {
-					readyNodes = append(readyNodes, pod)
+					readyNodes = append(readyNodes, &pod)
 				}
 			case core.PodScheduled:
 				if cond.Reason == core.PodReasonUnschedulable {
@@ -135,7 +135,7 @@ func (s *StatusUpdater) Sync(ctx context.Context) (syncer.SyncResult, error) {
 	return syncer.SyncResult{}, s.updateNodeStatus(s.cli, readyNodes)
 }
 
-func (s *StatusUpdater) updateNodeStatus(cli client.Client, pods []core.Pod) error {
+func (s *StatusUpdater) updateNodeStatus(cli client.Client, pods []*core.Pod) error {
 	sctName := s.GetNameForResource(utils.Secret)
 	svcName := s.GetNameForResource(utils.HeadlessSVC)
 	port := utils.MysqlPort
@@ -168,7 +168,7 @@ func (s *StatusUpdater) updateNodeStatus(cli client.Client, pods []core.Pod) err
 		node.Message = ""
 		node.Healthy = false
 
-		isLeader, err := checkRole(&pod)
+		isLeader, err := checkRole(pod)
 		if err != nil {
 			s.log.Error(err, "failed to check the node role", "node", node.Name)
 			node.Message = err.Error()
@@ -200,7 +200,7 @@ func (s *StatusUpdater) updateNodeStatus(cli client.Client, pods []core.Pod) err
 
 		if isLeader == core.ConditionTrue && isReadOnly != core.ConditionFalse {
 			s.log.V(1).Info("try to correct the leader writeable", "node", node.Name)
-			correctLeaderReadOnly(&pod)
+			correctLeaderReadOnly(pod)
 		}
 
 		// update mysqlv1.NodeConditionLagged.
