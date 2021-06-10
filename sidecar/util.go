@@ -23,8 +23,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/zhyass/mysql-operator/utils"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+
+	"github.com/zhyass/mysql-operator/utils"
 )
 
 var (

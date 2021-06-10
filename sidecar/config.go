@@ -20,6 +20,7 @@ import (
 	"strconv"
 
 	"github.com/blang/semver"
+
 	"github.com/zhyass/mysql-operator/utils"
 )
 

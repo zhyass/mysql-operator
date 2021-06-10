@@ -19,9 +19,10 @@ package container
 import (
 	"strconv"
 
+	corev1 "k8s.io/api/core/v1"
+
 	"github.com/zhyass/mysql-operator/cluster"
 	"github.com/zhyass/mysql-operator/utils"
-	core "k8s.io/api/core/v1"
 )
 
 type initSidecar struct {
@@ -42,13 +43,13 @@ func (c *initSidecar) getCommand() []string {
 	return []string{"sidecar", "init"}
 }
 
-func (c *initSidecar) getEnvVars() []core.EnvVar {
+func (c *initSidecar) getEnvVars() []corev1.EnvVar {
 	sctName := c.GetNameForResource(utils.Secret)
-	envs := []core.EnvVar{
+	envs := []corev1.EnvVar{
 		{
 			Name: "POD_HOSTNAME",
-			ValueFrom: &core.EnvVarSource{
-				FieldRef: &core.ObjectFieldSelector{
+			ValueFrom: &corev1.EnvVarSource{
+				FieldRef: &corev1.ObjectFieldSelector{
 					APIVersion: "v1",
 					FieldPath:  "metadata.name",
 				},
@@ -82,7 +83,7 @@ func (c *initSidecar) getEnvVars() []core.EnvVar {
 	}
 
 	if c.Spec.MysqlOpts.InitTokuDB {
-		envs = append(envs, core.EnvVar{
+		envs = append(envs, corev1.EnvVar{
 			Name:  "INIT_TOKUDB",
 			Value: "1",
 		})
@@ -91,28 +92,28 @@ func (c *initSidecar) getEnvVars() []core.EnvVar {
 	return envs
 }
 
-func (c *initSidecar) getLifecycle() *core.Lifecycle {
+func (c *initSidecar) getLifecycle() *corev1.Lifecycle {
 	return nil
 }
 
-func (c *initSidecar) getResources() core.ResourceRequirements {
+func (c *initSidecar) getResources() corev1.ResourceRequirements {
 	return c.Spec.PodSpec.Resources
 }
 
-func (c *initSidecar) getPorts() []core.ContainerPort {
+func (c *initSidecar) getPorts() []corev1.ContainerPort {
 	return nil
 }
 
-func (c *initSidecar) getLivenessProbe() *core.Probe {
+func (c *initSidecar) getLivenessProbe() *corev1.Probe {
 	return nil
 }
 
-func (c *initSidecar) getReadinessProbe() *core.Probe {
+func (c *initSidecar) getReadinessProbe() *corev1.Probe {
 	return nil
 }
 
-func (c *initSidecar) getVolumeMounts() []core.VolumeMount {
-	volumeMounts := []core.VolumeMount{
+func (c *initSidecar) getVolumeMounts() []corev1.VolumeMount {
+	volumeMounts := []corev1.VolumeMount{
 		{
 			Name:      utils.ConfVolumeName,
 			MountPath: utils.ConfVolumeMountPath,
@@ -137,7 +138,7 @@ func (c *initSidecar) getVolumeMounts() []core.VolumeMount {
 
 	if c.Spec.MysqlOpts.InitTokuDB {
 		volumeMounts = append(volumeMounts,
-			core.VolumeMount{
+			corev1.VolumeMount{
 				Name:      utils.SysVolumeName,
 				MountPath: utils.SysVolumeMountPath,
 			},
@@ -146,7 +147,7 @@ func (c *initSidecar) getVolumeMounts() []core.VolumeMount {
 
 	if c.Spec.Persistence.Enabled {
 		volumeMounts = append(volumeMounts,
-			core.VolumeMount{
+			corev1.VolumeMount{
 				Name:      utils.DataVolumeName,
 				MountPath: utils.DataVolumeMountPath,
 			},

@@ -17,8 +17,9 @@ limitations under the License.
 package syncer
 
 import (
-	"github.com/zhyass/mysql-operator/utils"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+
+	"github.com/zhyass/mysql-operator/utils"
 )
 
 // log is for logging in this package.

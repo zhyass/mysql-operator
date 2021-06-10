@@ -23,7 +23,7 @@ import (
 
 	"github.com/go-ini/ini"
 	"github.com/presslabs/controller-util/syncer"
-	core "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -33,7 +33,7 @@ import (
 )
 
 func NewConfigMapSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface {
-	cm := &core.ConfigMap{
+	cm := &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
 			Kind:       "ConfigMap",

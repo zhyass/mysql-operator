@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"math"
 
-	core "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -28,7 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
-	mysqlv1 "github.com/zhyass/mysql-operator/api/v1"
+	apiv1 "github.com/zhyass/mysql-operator/api/v1"
 	"github.com/zhyass/mysql-operator/utils"
 )
 
@@ -41,17 +41,17 @@ const (
 )
 
 type Cluster struct {
-	*mysqlv1.Cluster
+	*apiv1.Cluster
 }
 
-func New(m *mysqlv1.Cluster) *Cluster {
+func New(m *apiv1.Cluster) *Cluster {
 	return &Cluster{
 		Cluster: m,
 	}
 }
 
 // Unwrap returns the api mysqlcluster object
-func (c *Cluster) Unwrap() *mysqlv1.Cluster {
+func (c *Cluster) Unwrap() *apiv1.Cluster {
 	return c.Cluster
 }
 
@@ -124,23 +124,23 @@ func (c *Cluster) GetPodHostName(p int) string {
 		c.Namespace)
 }
 
-func (c *Cluster) EnsureVolumes() []core.Volume {
-	var volumes []core.Volume
+func (c *Cluster) EnsureVolumes() []corev1.Volume {
+	var volumes []corev1.Volume
 	if !c.Spec.Persistence.Enabled {
-		volumes = append(volumes, core.Volume{
+		volumes = append(volumes, corev1.Volume{
 			Name: utils.DataVolumeName,
-			VolumeSource: core.VolumeSource{
-				EmptyDir: &core.EmptyDirVolumeSource{},
+			VolumeSource: corev1.VolumeSource{
+				EmptyDir: &corev1.EmptyDirVolumeSource{},
 			},
 		})
 	}
 
 	if c.Spec.MysqlOpts.InitTokuDB {
 		volumes = append(volumes,
-			core.Volume{
+			corev1.Volume{
 				Name: utils.SysVolumeName,
-				VolumeSource: core.VolumeSource{
-					HostPath: &core.HostPathVolumeSource{
+				VolumeSource: corev1.VolumeSource{
+					HostPath: &corev1.HostPathVolumeSource{
 						Path: "/sys/kernel/mm/transparent_hugepage",
 					},
 				},
@@ -149,44 +149,44 @@ func (c *Cluster) EnsureVolumes() []core.Volume {
 	}
 
 	volumes = append(volumes,
-		core.Volume{
+		corev1.Volume{
 			Name: utils.ConfVolumeName,
-			VolumeSource: core.VolumeSource{
-				EmptyDir: &core.EmptyDirVolumeSource{},
+			VolumeSource: corev1.VolumeSource{
+				EmptyDir: &corev1.EmptyDirVolumeSource{},
 			},
 		},
-		core.Volume{
+		corev1.Volume{
 			Name: utils.LogsVolumeName,
-			VolumeSource: core.VolumeSource{
-				EmptyDir: &core.EmptyDirVolumeSource{},
+			VolumeSource: corev1.VolumeSource{
+				EmptyDir: &corev1.EmptyDirVolumeSource{},
 			},
 		},
-		core.Volume{
+		corev1.Volume{
 			Name: utils.ConfMapVolumeName,
-			VolumeSource: core.VolumeSource{
-				ConfigMap: &core.ConfigMapVolumeSource{
-					LocalObjectReference: core.LocalObjectReference{
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					LocalObjectReference: corev1.LocalObjectReference{
 						Name: c.GetNameForResource(utils.ConfigMap),
 					},
 				},
 			},
 		},
-		core.Volume{
+		corev1.Volume{
 			Name: utils.ScriptsVolumeName,
-			VolumeSource: core.VolumeSource{
-				EmptyDir: &core.EmptyDirVolumeSource{},
+			VolumeSource: corev1.VolumeSource{
+				EmptyDir: &corev1.EmptyDirVolumeSource{},
 			},
 		},
-		core.Volume{
+		corev1.Volume{
 			Name: utils.XenonVolumeName,
-			VolumeSource: core.VolumeSource{
-				EmptyDir: &core.EmptyDirVolumeSource{},
+			VolumeSource: corev1.VolumeSource{
+				EmptyDir: &corev1.EmptyDirVolumeSource{},
 			},
 		},
-		core.Volume{
+		corev1.Volume{
 			Name: utils.InitFileVolumeName,
-			VolumeSource: core.VolumeSource{
-				EmptyDir: &core.EmptyDirVolumeSource{},
+			VolumeSource: corev1.VolumeSource{
+				EmptyDir: &corev1.EmptyDirVolumeSource{},
 			},
 		},
 	)
@@ -194,7 +194,7 @@ func (c *Cluster) EnsureVolumes() []core.Volume {
 	return volumes
 }
 
-func (c *Cluster) EnsureVolumeClaimTemplates(schema *runtime.Scheme) ([]core.PersistentVolumeClaim, error) {
+func (c *Cluster) EnsureVolumeClaimTemplates(schema *runtime.Scheme) ([]corev1.PersistentVolumeClaim, error) {
 	if !c.Spec.Persistence.Enabled {
 		return nil, nil
 	}
@@ -205,17 +205,17 @@ func (c *Cluster) EnsureVolumeClaimTemplates(schema *runtime.Scheme) ([]core.Per
 		}
 	}
 
-	data := core.PersistentVolumeClaim{
+	data := corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      utils.DataVolumeName,
 			Namespace: c.Namespace,
 			Labels:    c.GetLabels(),
 		},
-		Spec: core.PersistentVolumeClaimSpec{
+		Spec: corev1.PersistentVolumeClaimSpec{
 			AccessModes: c.Spec.Persistence.AccessModes,
-			Resources: core.ResourceRequirements{
-				Requests: core.ResourceList{
-					core.ResourceStorage: resource.MustParse(c.Spec.Persistence.Size),
+			Resources: corev1.ResourceRequirements{
+				Requests: corev1.ResourceList{
+					corev1.ResourceStorage: resource.MustParse(c.Spec.Persistence.Size),
 				},
 			},
 			StorageClassName: c.Spec.Persistence.StorageClass,
@@ -226,7 +226,7 @@ func (c *Cluster) EnsureVolumeClaimTemplates(schema *runtime.Scheme) ([]core.Per
 		return nil, fmt.Errorf("failed setting controller reference: %v", err)
 	}
 
-	return []core.PersistentVolumeClaim{data}, nil
+	return []corev1.PersistentVolumeClaim{data}, nil
 }
 
 // GetNameForResource returns the name of a resource from above
@@ -247,7 +247,7 @@ func (c *Cluster) GetNameForResource(name utils.ResourceName) string {
 
 func (c *Cluster) EnsureMysqlConf() {
 	if len(c.Spec.MysqlOpts.MysqlConf) == 0 {
-		c.Spec.MysqlOpts.MysqlConf = make(mysqlv1.MysqlConf)
+		c.Spec.MysqlOpts.MysqlConf = make(apiv1.MysqlConf)
 	}
 
 	var defaultSize, maxSize, innodbBufferPoolSize int64

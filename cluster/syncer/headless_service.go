@@ -18,7 +18,7 @@ package syncer
 
 import (
 	"github.com/presslabs/controller-util/syncer"
-	core "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -30,7 +30,7 @@ import (
 
 // NewHeadlessSVCSyncer returns a service syncer.
 func NewHeadlessSVCSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface {
-	service := &core.Service{
+	service := &corev1.Service{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
 			Kind:       "Service",
@@ -56,7 +56,7 @@ func NewHeadlessSVCSyncer(cli client.Client, c *cluster.Cluster) syncer.Interfac
 		// Use `publishNotReadyAddresses` to be able to access pods even if the pod is not ready.
 		service.Spec.PublishNotReadyAddresses = true
 
-		service.Spec.Ports = []core.ServicePort{
+		service.Spec.Ports = []corev1.ServicePort{
 			{
 				Name:       utils.MysqlPortName,
 				Port:       utils.MysqlPort,
@@ -65,7 +65,7 @@ func NewHeadlessSVCSyncer(cli client.Client, c *cluster.Cluster) syncer.Interfac
 		}
 
 		if c.Spec.MetricsOpts.Enabled {
-			service.Spec.Ports = append(service.Spec.Ports, core.ServicePort{
+			service.Spec.Ports = append(service.Spec.Ports, corev1.ServicePort{
 				Name:       utils.MetricsPortName,
 				Port:       utils.MetricsPort,
 				TargetPort: intstr.FromInt(utils.MetricsPort),

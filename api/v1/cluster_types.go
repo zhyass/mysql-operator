@@ -17,7 +17,7 @@ limitations under the License.
 package v1
 
 import (
-	core "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
@@ -101,7 +101,7 @@ type MysqlOpts struct {
 
 	// +optional
 	// +kubebuilder:default:={limits: {cpu: "500m", memory: "1Gi"}, requests: {cpu: "100m", memory: "256Mi"}}
-	Resources core.ResourceRequirements `json:"resources,omitempty"`
+	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
 }
 
 // XenonOpts defines the options of xenon container.
@@ -123,7 +123,7 @@ type XenonOpts struct {
 
 	// +optional
 	// +kubebuilder:default:={limits: {cpu: "100m", memory: "256Mi"}, requests: {cpu: "50m", memory: "128Mi"}}
-	Resources core.ResourceRequirements `json:"resources,omitempty"`
+	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
 }
 
 type MetricsOpts struct {
@@ -133,7 +133,7 @@ type MetricsOpts struct {
 
 	// +optional
 	// +kubebuilder:default:={limits: {cpu: "100m", memory: "128Mi"}, requests: {cpu: "10m", memory: "32Mi"}}
-	Resources core.ResourceRequirements `json:"resources,omitempty"`
+	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
 
 	// +optional
 	// +kubebuilder:default:=false
@@ -148,14 +148,14 @@ type MysqlConf map[string]intstr.IntOrString
 type PodSpec struct {
 	// +kubebuilder:validation:Enum=Always;IfNotPresent;Never
 	// +kubebuilder:default:="IfNotPresent"
-	ImagePullPolicy core.PullPolicy `json:"imagePullPolicy,omitempty"`
+	ImagePullPolicy corev1.PullPolicy `json:"imagePullPolicy,omitempty"`
 
-	Labels            map[string]string `json:"labels,omitempty"`
-	Annotations       map[string]string `json:"annotations,omitempty"`
-	Affinity          *core.Affinity    `json:"affinity,omitempty"`
-	PriorityClassName string            `json:"priorityClassName,omitempty"`
-	Tolerations       []core.Toleration `json:"tolerations,omitempty"`
-	SchedulerName     string            `json:"schedulerName,omitempty"`
+	Labels            map[string]string   `json:"labels,omitempty"`
+	Annotations       map[string]string   `json:"annotations,omitempty"`
+	Affinity          *corev1.Affinity    `json:"affinity,omitempty"`
+	PriorityClassName string              `json:"priorityClassName,omitempty"`
+	Tolerations       []corev1.Toleration `json:"tolerations,omitempty"`
+	SchedulerName     string              `json:"schedulerName,omitempty"`
 
 	// +optional
 	// +kubebuilder:validation:MinLength=1
@@ -165,7 +165,7 @@ type PodSpec struct {
 
 	// +optional
 	// +kubebuilder:default:={requests: {cpu: "10m", memory: "32Mi"}}
-	Resources core.ResourceRequirements `json:"resources,omitempty"`
+	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
 
 	// +optional
 	// +kubebuilder:default:="zhyass/sidecar:0.1"
@@ -195,7 +195,7 @@ type Persistence struct {
 	// More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#access-modes-1
 	// +optional
 	// +kubebuilder:default:={"ReadWriteOnce"}
-	AccessModes []core.PersistentVolumeAccessMode `json:"accessModes,omitempty"`
+	AccessModes []corev1.PersistentVolumeAccessMode `json:"accessModes,omitempty"`
 
 	// Name of the StorageClass required by the claim.
 	// More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#class-1
@@ -220,7 +220,7 @@ type ClusterCondition struct {
 	// type of cluster condition, values in (\"Ready\")
 	Type ClusterConditionType `json:"type"`
 	// Status of the condition, one of (\"True\", \"False\", \"Unknown\")
-	Status core.ConditionStatus `json:"status"`
+	Status corev1.ConditionStatus `json:"status"`
 
 	// LastTransitionTime
 	LastTransitionTime metav1.Time `json:"lastTransitionTime"`
@@ -239,9 +239,9 @@ type NodeStatus struct {
 
 // NodeCondition defines type for representing node conditions.
 type NodeCondition struct {
-	Type               NodeConditionType    `json:"type"`
-	Status             core.ConditionStatus `json:"status"`
-	LastTransitionTime metav1.Time          `json:"lastTransitionTime"`
+	Type               NodeConditionType      `json:"type"`
+	Status             corev1.ConditionStatus `json:"status"`
+	LastTransitionTime metav1.Time            `json:"lastTransitionTime"`
 }
 
 // NodeConditionType defines type for node condition type.

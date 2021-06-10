@@ -17,25 +17,26 @@ limitations under the License.
 package container
 
 import (
+	corev1 "k8s.io/api/core/v1"
+
 	"github.com/zhyass/mysql-operator/cluster"
 	"github.com/zhyass/mysql-operator/utils"
-	core "k8s.io/api/core/v1"
 )
 
 type container interface {
 	getName() string
 	getImage() string
 	getCommand() []string
-	getEnvVars() []core.EnvVar
-	getLifecycle() *core.Lifecycle
-	getResources() core.ResourceRequirements
-	getPorts() []core.ContainerPort
-	getLivenessProbe() *core.Probe
-	getReadinessProbe() *core.Probe
-	getVolumeMounts() []core.VolumeMount
+	getEnvVars() []corev1.EnvVar
+	getLifecycle() *corev1.Lifecycle
+	getResources() corev1.ResourceRequirements
+	getPorts() []corev1.ContainerPort
+	getLivenessProbe() *corev1.Probe
+	getReadinessProbe() *corev1.Probe
+	getVolumeMounts() []corev1.VolumeMount
 }
 
-func EnsureContainer(name string, c *cluster.Cluster) core.Container {
+func EnsureContainer(name string, c *cluster.Cluster) corev1.Container {
 	var ctr container
 	switch name {
 	case utils.ContainerInitSidecarName:
@@ -54,7 +55,7 @@ func EnsureContainer(name string, c *cluster.Cluster) core.Container {
 		ctr = &auditLog{c, name}
 	}
 
-	return core.Container{
+	return corev1.Container{
 		Name:            ctr.getName(),
 		Image:           ctr.getImage(),
 		ImagePullPolicy: c.Spec.PodSpec.ImagePullPolicy,

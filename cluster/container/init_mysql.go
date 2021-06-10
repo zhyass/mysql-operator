@@ -17,9 +17,10 @@ limitations under the License.
 package container
 
 import (
+	corev1 "k8s.io/api/core/v1"
+
 	"github.com/zhyass/mysql-operator/cluster"
 	"github.com/zhyass/mysql-operator/utils"
-	core "k8s.io/api/core/v1"
 )
 
 type initMysql struct {
@@ -41,8 +42,8 @@ func (c *initMysql) getCommand() []string {
 	return nil
 }
 
-func (c *initMysql) getEnvVars() []core.EnvVar {
-	envs := []core.EnvVar{
+func (c *initMysql) getEnvVars() []corev1.EnvVar {
+	envs := []corev1.EnvVar{
 		{
 			Name:  "MYSQL_ALLOW_EMPTY_PASSWORD",
 			Value: "yes",
@@ -67,7 +68,7 @@ func (c *initMysql) getEnvVars() []core.EnvVar {
 	)
 
 	if c.Spec.MysqlOpts.InitTokuDB {
-		envs = append(envs, core.EnvVar{
+		envs = append(envs, corev1.EnvVar{
 			Name:  "INIT_TOKUDB",
 			Value: "1",
 		})
@@ -76,28 +77,28 @@ func (c *initMysql) getEnvVars() []core.EnvVar {
 	return envs
 }
 
-func (c *initMysql) getLifecycle() *core.Lifecycle {
+func (c *initMysql) getLifecycle() *corev1.Lifecycle {
 	return nil
 }
 
-func (c *initMysql) getResources() core.ResourceRequirements {
+func (c *initMysql) getResources() corev1.ResourceRequirements {
 	return c.Spec.MysqlOpts.Resources
 }
 
-func (c *initMysql) getPorts() []core.ContainerPort {
+func (c *initMysql) getPorts() []corev1.ContainerPort {
 	return nil
 }
 
-func (c *initMysql) getLivenessProbe() *core.Probe {
+func (c *initMysql) getLivenessProbe() *corev1.Probe {
 	return nil
 }
 
-func (c *initMysql) getReadinessProbe() *core.Probe {
+func (c *initMysql) getReadinessProbe() *corev1.Probe {
 	return nil
 }
 
-func (c *initMysql) getVolumeMounts() []core.VolumeMount {
-	return []core.VolumeMount{
+func (c *initMysql) getVolumeMounts() []corev1.VolumeMount {
+	return []corev1.VolumeMount{
 		{
 			Name:      utils.ConfVolumeName,
 			MountPath: utils.ConfVolumeMountPath,

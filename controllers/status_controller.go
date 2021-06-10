@@ -24,8 +24,6 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/presslabs/controller-util/syncer"
-	mysqlv1 "github.com/zhyass/mysql-operator/api/v1"
-	"github.com/zhyass/mysql-operator/cluster"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -41,6 +39,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
+	apiv1 "github.com/zhyass/mysql-operator/api/v1"
+	"github.com/zhyass/mysql-operator/cluster"
 	clustersyncer "github.com/zhyass/mysql-operator/cluster/syncer"
 )
 
@@ -70,7 +70,7 @@ func (r *StatusReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	_ = r.Log.WithValues("status", req.NamespacedName)
 
 	// your logic here
-	instance := cluster.New(&mysqlv1.Cluster{})
+	instance := cluster.New(&apiv1.Cluster{})
 
 	err := r.Get(ctx, req.NamespacedName, instance.Unwrap())
 	if err != nil {
@@ -106,8 +106,8 @@ func (r *StatusReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	clusters := &sync.Map{}
 	events := make(chan event.GenericEvent, 1024)
 	bld := ctrl.NewControllerManagedBy(mgr).
-		For(&mysqlv1.Cluster{}).
-		Watches(&source.Kind{Type: &mysqlv1.Cluster{}}, &handler.Funcs{
+		For(&apiv1.Cluster{}).
+		Watches(&source.Kind{Type: &apiv1.Cluster{}}, &handler.Funcs{
 			CreateFunc: func(evt event.CreateEvent, q workqueue.RateLimitingInterface) {
 				if evt.Object == nil {
 					log.Error(nil, "CreateEvent received with no metadata", "CreateEvent", evt)

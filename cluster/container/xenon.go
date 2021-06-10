@@ -19,9 +19,10 @@ package container
 import (
 	"fmt"
 
+	corev1 "k8s.io/api/core/v1"
+
 	"github.com/zhyass/mysql-operator/cluster"
 	"github.com/zhyass/mysql-operator/utils"
-	core "k8s.io/api/core/v1"
 )
 
 type xenon struct {
@@ -42,27 +43,27 @@ func (c *xenon) getCommand() []string {
 	return nil
 }
 
-func (c *xenon) getEnvVars() []core.EnvVar {
+func (c *xenon) getEnvVars() []corev1.EnvVar {
 	return nil
 }
 
-func (c *xenon) getLifecycle() *core.Lifecycle {
+func (c *xenon) getLifecycle() *corev1.Lifecycle {
 	arg := fmt.Sprintf("until (xenoncli xenon ping && xenoncli cluster add %s) > /dev/null 2>&1; do sleep 2; done", c.CreatePeers())
-	return &core.Lifecycle{
-		PostStart: &core.Handler{
-			Exec: &core.ExecAction{
+	return &corev1.Lifecycle{
+		PostStart: &corev1.Handler{
+			Exec: &corev1.ExecAction{
 				Command: []string{"sh", "-c", arg},
 			},
 		},
 	}
 }
 
-func (c *xenon) getResources() core.ResourceRequirements {
+func (c *xenon) getResources() corev1.ResourceRequirements {
 	return c.Spec.XenonOpts.Resources
 }
 
-func (c *xenon) getPorts() []core.ContainerPort {
-	return []core.ContainerPort{
+func (c *xenon) getPorts() []corev1.ContainerPort {
+	return []corev1.ContainerPort{
 		{
 			Name:          utils.XenonPortName,
 			ContainerPort: utils.XenonPort,
@@ -70,10 +71,10 @@ func (c *xenon) getPorts() []core.ContainerPort {
 	}
 }
 
-func (c *xenon) getLivenessProbe() *core.Probe {
-	return &core.Probe{
-		Handler: core.Handler{
-			Exec: &core.ExecAction{
+func (c *xenon) getLivenessProbe() *corev1.Probe {
+	return &corev1.Probe{
+		Handler: corev1.Handler{
+			Exec: &corev1.ExecAction{
 				Command: []string{"pgrep", "xenon"},
 			},
 		},
@@ -85,10 +86,10 @@ func (c *xenon) getLivenessProbe() *core.Probe {
 	}
 }
 
-func (c *xenon) getReadinessProbe() *core.Probe {
-	return &core.Probe{
-		Handler: core.Handler{
-			Exec: &core.ExecAction{
+func (c *xenon) getReadinessProbe() *corev1.Probe {
+	return &corev1.Probe{
+		Handler: corev1.Handler{
+			Exec: &corev1.ExecAction{
 				Command: []string{"sh", "-c", "xenoncli xenon ping"},
 			},
 		},
@@ -100,8 +101,8 @@ func (c *xenon) getReadinessProbe() *core.Probe {
 	}
 }
 
-func (c *xenon) getVolumeMounts() []core.VolumeMount {
-	return []core.VolumeMount{
+func (c *xenon) getVolumeMounts() []corev1.VolumeMount {
+	return []corev1.VolumeMount{
 		{
 			Name:      utils.ScriptsVolumeName,
 			MountPath: utils.ScriptsVolumeMountPath,

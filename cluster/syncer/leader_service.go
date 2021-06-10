@@ -18,7 +18,7 @@ package syncer
 
 import (
 	"github.com/presslabs/controller-util/syncer"
-	core "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -29,7 +29,7 @@ import (
 
 // NewLeaderSVCSyncer returns a service syncer.
 func NewLeaderSVCSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface {
-	service := &core.Service{
+	service := &corev1.Service{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
 			Kind:       "Service",
@@ -46,7 +46,7 @@ func NewLeaderSVCSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface 
 		service.Spec.Selector["role"] = "leader"
 
 		if len(service.Spec.Ports) != 1 {
-			service.Spec.Ports = make([]core.ServicePort, 1)
+			service.Spec.Ports = make([]corev1.ServicePort, 1)
 		}
 
 		service.Spec.Ports[0].Name = utils.MysqlPortName

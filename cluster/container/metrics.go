@@ -17,10 +17,11 @@ limitations under the License.
 package container
 
 import (
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
+
 	"github.com/zhyass/mysql-operator/cluster"
 	"github.com/zhyass/mysql-operator/utils"
-	core "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 type metrics struct {
@@ -41,22 +42,22 @@ func (c *metrics) getCommand() []string {
 	return nil
 }
 
-func (c *metrics) getEnvVars() []core.EnvVar {
-	return []core.EnvVar{
+func (c *metrics) getEnvVars() []corev1.EnvVar {
+	return []corev1.EnvVar{
 		getEnvVarFromSecret(c.GetNameForResource(utils.Secret), "DATA_SOURCE_NAME", "data-source", true),
 	}
 }
 
-func (c *metrics) getLifecycle() *core.Lifecycle {
+func (c *metrics) getLifecycle() *corev1.Lifecycle {
 	return nil
 }
 
-func (c *metrics) getResources() core.ResourceRequirements {
+func (c *metrics) getResources() corev1.ResourceRequirements {
 	return c.Spec.MetricsOpts.Resources
 }
 
-func (c *metrics) getPorts() []core.ContainerPort {
-	return []core.ContainerPort{
+func (c *metrics) getPorts() []corev1.ContainerPort {
+	return []corev1.ContainerPort{
 		{
 			Name:          utils.MetricsPortName,
 			ContainerPort: utils.MetricsPort,
@@ -64,10 +65,10 @@ func (c *metrics) getPorts() []core.ContainerPort {
 	}
 }
 
-func (c *metrics) getLivenessProbe() *core.Probe {
-	return &core.Probe{
-		Handler: core.Handler{
-			HTTPGet: &core.HTTPGetAction{
+func (c *metrics) getLivenessProbe() *corev1.Probe {
+	return &corev1.Probe{
+		Handler: corev1.Handler{
+			HTTPGet: &corev1.HTTPGetAction{
 				Path: "/",
 				Port: intstr.FromInt(utils.MetricsPort),
 			},
@@ -80,10 +81,10 @@ func (c *metrics) getLivenessProbe() *core.Probe {
 	}
 }
 
-func (c *metrics) getReadinessProbe() *core.Probe {
-	return &core.Probe{
-		Handler: core.Handler{
-			HTTPGet: &core.HTTPGetAction{
+func (c *metrics) getReadinessProbe() *corev1.Probe {
+	return &corev1.Probe{
+		Handler: corev1.Handler{
+			HTTPGet: &corev1.HTTPGetAction{
 				Path: "/",
 				Port: intstr.FromInt(utils.MetricsPort),
 			},
@@ -96,6 +97,6 @@ func (c *metrics) getReadinessProbe() *core.Probe {
 	}
 }
 
-func (c *metrics) getVolumeMounts() []core.VolumeMount {
+func (c *metrics) getVolumeMounts() []corev1.VolumeMount {
 	return nil
 }

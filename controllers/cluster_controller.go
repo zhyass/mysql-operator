@@ -22,8 +22,8 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/presslabs/controller-util/syncer"
-	apps "k8s.io/api/apps/v1"
-	core "k8s.io/api/core/v1"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -32,7 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	mysqlv1 "github.com/zhyass/mysql-operator/api/v1"
+	apiv1 "github.com/zhyass/mysql-operator/api/v1"
 	"github.com/zhyass/mysql-operator/cluster"
 	clustersyncer "github.com/zhyass/mysql-operator/cluster/syncer"
 )
@@ -69,7 +69,7 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	log := r.Log.WithValues("cluster", req.NamespacedName)
 
 	// your logic here
-	instance := cluster.New(&mysqlv1.Cluster{})
+	instance := cluster.New(&apiv1.Cluster{})
 
 	err := r.Get(ctx, req.NamespacedName, instance.Unwrap())
 	if err != nil {
@@ -126,13 +126,13 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 // SetupWithManager sets up the controller with the Manager.
 func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&mysqlv1.Cluster{}).
-		Owns(&apps.StatefulSet{}).
-		Owns(&core.ConfigMap{}).
-		Owns(&core.Service{}).
+		For(&apiv1.Cluster{}).
+		Owns(&appsv1.StatefulSet{}).
+		Owns(&corev1.ConfigMap{}).
+		Owns(&corev1.Service{}).
 		Owns(&rbacv1.Role{}).
 		Owns(&rbacv1.RoleBinding{}).
-		Owns(&core.ServiceAccount{}).
-		Owns(&core.Secret{}).
+		Owns(&corev1.ServiceAccount{}).
+		Owns(&corev1.Secret{}).
 		Complete(r)
 }

@@ -24,15 +24,16 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/presslabs/controller-util/syncer"
-	mysqlv1 "github.com/zhyass/mysql-operator/api/v1"
-	"github.com/zhyass/mysql-operator/cluster"
-	"github.com/zhyass/mysql-operator/internal"
-	"github.com/zhyass/mysql-operator/utils"
-	core "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	apiv1 "github.com/zhyass/mysql-operator/api/v1"
+	"github.com/zhyass/mysql-operator/cluster"
+	"github.com/zhyass/mysql-operator/internal"
+	"github.com/zhyass/mysql-operator/utils"
 )
 
 const maxStatusesQuantity = 10
@@ -69,14 +70,14 @@ func (s *StatusUpdater) ObjectOwner() runtime.Object { return s.Cluster }
 func (s *StatusUpdater) GetOwner() runtime.Object { return s.Cluster }
 
 func (s *StatusUpdater) Sync(ctx context.Context) (syncer.SyncResult, error) {
-	clusterCondition := mysqlv1.ClusterCondition{
-		Type:               mysqlv1.ClusterInit,
-		Status:             core.ConditionTrue,
+	clusterCondition := apiv1.ClusterCondition{
+		Type:               apiv1.ClusterInit,
+		Status:             corev1.ConditionTrue,
 		LastTransitionTime: metav1.NewTime(time.Now()),
 	}
-	s.Status.State = mysqlv1.ClusterInit
+	s.Status.State = apiv1.ClusterInit
 
-	list := core.PodList{}
+	list := corev1.PodList{}
 	err := s.cli.List(
 		ctx,
 		&list,
@@ -90,24 +91,24 @@ func (s *StatusUpdater) Sync(ctx context.Context) (syncer.SyncResult, error) {
 	}
 
 	// get ready nodes.
-	var readyNodes []core.Pod
+	var readyNodes []corev1.Pod
 	for _, pod := range list.Items {
 		for _, cond := range pod.Status.Conditions {
 			switch cond.Type {
-			case core.ContainersReady:
-				if cond.Status == core.ConditionTrue {
+			case corev1.ContainersReady:
+				if cond.Status == corev1.ConditionTrue {
 					readyNodes = append(readyNodes, pod)
 				}
-			case core.PodScheduled:
-				if cond.Reason == core.PodReasonUnschedulable {
-					clusterCondition = mysqlv1.ClusterCondition{
-						Type:               mysqlv1.ClusterError,
-						Status:             core.ConditionTrue,
+			case corev1.PodScheduled:
+				if cond.Reason == corev1.PodReasonUnschedulable {
+					clusterCondition = apiv1.ClusterCondition{
+						Type:               apiv1.ClusterError,
+						Status:             corev1.ConditionTrue,
 						LastTransitionTime: metav1.NewTime(time.Now()),
-						Reason:             core.PodReasonUnschedulable,
+						Reason:             corev1.PodReasonUnschedulable,
 						Message:            cond.Message,
 					}
-					s.Status.State = mysqlv1.ClusterError
+					s.Status.State = apiv1.ClusterError
 				}
 			}
 		}
@@ -115,8 +116,8 @@ func (s *StatusUpdater) Sync(ctx context.Context) (syncer.SyncResult, error) {
 
 	s.Status.ReadyNodes = len(readyNodes)
 	if s.Status.ReadyNodes == int(*s.Spec.Replicas) {
-		s.Status.State = mysqlv1.ClusterReady
-		clusterCondition.Type = mysqlv1.ClusterReady
+		s.Status.State = apiv1.ClusterReady
+		clusterCondition.Type = apiv1.ClusterReady
 	}
 
 	if len(s.Status.Conditions) == 0 {
@@ -135,13 +136,13 @@ func (s *StatusUpdater) Sync(ctx context.Context) (syncer.SyncResult, error) {
 	return syncer.SyncResult{}, s.updateNodeStatus(ctx, s.cli, readyNodes)
 }
 
-func (s *StatusUpdater) updateNodeStatus(ctx context.Context, cli client.Client, pods []core.Pod) error {
+func (s *StatusUpdater) updateNodeStatus(ctx context.Context, cli client.Client, pods []corev1.Pod) error {
 	sctName := s.GetNameForResource(utils.Secret)
 	svcName := s.GetNameForResource(utils.HeadlessSVC)
 	port := utils.MysqlPort
 	nameSpace := s.Namespace
 
-	secret := &core.Secret{}
+	secret := &corev1.Secret{}
 	if err := cli.Get(context.TODO(),
 		types.NamespacedName{
 			Namespace: nameSpace,
@@ -173,10 +174,10 @@ func (s *StatusUpdater) updateNodeStatus(ctx context.Context, cli client.Client,
 			s.log.Error(err, "failed to check the node role", "node", node.Name)
 			node.Message = err.Error()
 		}
-		// update mysqlv1.NodeConditionLeader.
+		// update apiv1.NodeConditionLeader.
 		s.updateNodeCondition(node, 1, isLeader)
 
-		isLagged, isReplicating, isReadOnly := core.ConditionUnknown, core.ConditionUnknown, core.ConditionUnknown
+		isLagged, isReplicating, isReadOnly := corev1.ConditionUnknown, corev1.ConditionUnknown, corev1.ConditionUnknown
 		runner, err := internal.NewSQLRunner(utils.BytesToString(user), utils.BytesToString(password), host, port)
 		if err != nil {
 			s.log.Error(err, "failed to connect the mysql", "node", node.Name)
@@ -198,16 +199,16 @@ func (s *StatusUpdater) updateNodeStatus(ctx context.Context, cli client.Client,
 			runner.Close()
 		}
 
-		if isLeader == core.ConditionTrue && isReadOnly != core.ConditionFalse {
+		if isLeader == corev1.ConditionTrue && isReadOnly != corev1.ConditionFalse {
 			s.log.V(1).Info("try to correct the leader writeable", "node", node.Name)
 			correctLeaderReadOnly(nameSpace, podName)
 		}
 
-		// update mysqlv1.NodeConditionLagged.
+		// update apiv1.NodeConditionLagged.
 		s.updateNodeCondition(node, 0, isLagged)
-		// update mysqlv1.NodeConditionReplicating.
+		// update apiv1.NodeConditionReplicating.
 		s.updateNodeCondition(node, 3, isReplicating)
-		// update mysqlv1.NodeConditionReadOnly.
+		// update apiv1.NodeConditionReadOnly.
 		s.updateNodeCondition(node, 2, isReadOnly)
 
 		if err = setPodHealthy(ctx, cli, &pod, node); err != nil {
@@ -227,27 +228,27 @@ func (s *StatusUpdater) getNodeStatusIndex(name string) int {
 	}
 
 	lastTransitionTime := metav1.NewTime(time.Now())
-	status := mysqlv1.NodeStatus{
+	status := apiv1.NodeStatus{
 		Name: name,
-		Conditions: []mysqlv1.NodeCondition{
+		Conditions: []apiv1.NodeCondition{
 			{
-				Type:               mysqlv1.NodeConditionLagged,
-				Status:             core.ConditionUnknown,
+				Type:               apiv1.NodeConditionLagged,
+				Status:             corev1.ConditionUnknown,
 				LastTransitionTime: lastTransitionTime,
 			},
 			{
-				Type:               mysqlv1.NodeConditionLeader,
-				Status:             core.ConditionUnknown,
+				Type:               apiv1.NodeConditionLeader,
+				Status:             corev1.ConditionUnknown,
 				LastTransitionTime: lastTransitionTime,
 			},
 			{
-				Type:               mysqlv1.NodeConditionReadOnly,
-				Status:             core.ConditionUnknown,
+				Type:               apiv1.NodeConditionReadOnly,
+				Status:             corev1.ConditionUnknown,
 				LastTransitionTime: lastTransitionTime,
 			},
 			{
-				Type:               mysqlv1.NodeConditionReplicating,
-				Status:             core.ConditionUnknown,
+				Type:               apiv1.NodeConditionReplicating,
+				Status:             corev1.ConditionUnknown,
 				LastTransitionTime: lastTransitionTime,
 			},
 		},
@@ -256,7 +257,7 @@ func (s *StatusUpdater) getNodeStatusIndex(name string) int {
 	return len
 }
 
-func (s *StatusUpdater) updateNodeCondition(node *mysqlv1.NodeStatus, idx int, status core.ConditionStatus) {
+func (s *StatusUpdater) updateNodeCondition(node *apiv1.NodeStatus, idx int, status corev1.ConditionStatus) {
 	if node.Conditions[idx].Status != status {
 		t := time.Now()
 		s.log.V(3).Info(fmt.Sprintf("Found status change for node %q condition %q: %q -> %q; setting lastTransitionTime to %v",
@@ -266,9 +267,9 @@ func (s *StatusUpdater) updateNodeCondition(node *mysqlv1.NodeStatus, idx int, s
 	}
 }
 
-func checkRole(namespace, podName string) (core.ConditionStatus, error) {
+func checkRole(namespace, podName string) (corev1.ConditionStatus, error) {
 	command := []string{"xenoncli", "raft", "status"}
-	status := core.ConditionUnknown
+	status := corev1.ConditionUnknown
 	executor, err := internal.NewPodExecutor()
 	if err != nil {
 		return status, err
@@ -289,11 +290,11 @@ func checkRole(namespace, podName string) (core.ConditionStatus, error) {
 	}
 
 	if out["state"] == "LEADER" {
-		return core.ConditionTrue, nil
+		return corev1.ConditionTrue, nil
 	}
 
 	if out["state"] == "FOLLOWER" {
-		return core.ConditionFalse, nil
+		return corev1.ConditionFalse, nil
 	}
 
 	return status, nil
@@ -313,16 +314,16 @@ func correctLeaderReadOnly(namespace, podName string) error {
 	return executor.SetGlobalSysVar(namespace, podName, "SET GLOBAL super_read_only=off")
 }
 
-func setPodHealthy(ctx context.Context, cli client.Client, pod *core.Pod, node *mysqlv1.NodeStatus) error {
+func setPodHealthy(ctx context.Context, cli client.Client, pod *corev1.Pod, node *apiv1.NodeStatus) error {
 	healthy := "no"
-	if node.Conditions[0].Status == core.ConditionFalse {
-		if node.Conditions[1].Status == core.ConditionFalse &&
-			node.Conditions[2].Status == core.ConditionTrue &&
-			node.Conditions[3].Status == core.ConditionTrue {
+	if node.Conditions[0].Status == corev1.ConditionFalse {
+		if node.Conditions[1].Status == corev1.ConditionFalse &&
+			node.Conditions[2].Status == corev1.ConditionTrue &&
+			node.Conditions[3].Status == corev1.ConditionTrue {
 			healthy = "yes"
-		} else if node.Conditions[1].Status == core.ConditionTrue &&
-			node.Conditions[2].Status == core.ConditionFalse &&
-			node.Conditions[3].Status == core.ConditionFalse {
+		} else if node.Conditions[1].Status == corev1.ConditionTrue &&
+			node.Conditions[2].Status == corev1.ConditionFalse &&
+			node.Conditions[3].Status == corev1.ConditionFalse {
 			healthy = "yes"
 		}
 	}

@@ -17,9 +17,10 @@ limitations under the License.
 package container
 
 import (
+	corev1 "k8s.io/api/core/v1"
+
 	"github.com/zhyass/mysql-operator/cluster"
 	"github.com/zhyass/mysql-operator/utils"
-	core "k8s.io/api/core/v1"
 )
 
 type mysql struct {
@@ -41,9 +42,9 @@ func (c *mysql) getCommand() []string {
 	return nil
 }
 
-func (c *mysql) getEnvVars() []core.EnvVar {
+func (c *mysql) getEnvVars() []corev1.EnvVar {
 	if c.Spec.MysqlOpts.InitTokuDB {
-		return []core.EnvVar{
+		return []corev1.EnvVar{
 			{
 				Name:  "INIT_TOKUDB",
 				Value: "1",
@@ -54,16 +55,16 @@ func (c *mysql) getEnvVars() []core.EnvVar {
 	return nil
 }
 
-func (c *mysql) getLifecycle() *core.Lifecycle {
+func (c *mysql) getLifecycle() *corev1.Lifecycle {
 	return nil
 }
 
-func (c *mysql) getResources() core.ResourceRequirements {
+func (c *mysql) getResources() corev1.ResourceRequirements {
 	return c.Spec.MysqlOpts.Resources
 }
 
-func (c *mysql) getPorts() []core.ContainerPort {
-	return []core.ContainerPort{
+func (c *mysql) getPorts() []corev1.ContainerPort {
+	return []corev1.ContainerPort{
 		{
 			Name:          utils.MysqlPortName,
 			ContainerPort: utils.MysqlPort,
@@ -71,10 +72,10 @@ func (c *mysql) getPorts() []core.ContainerPort {
 	}
 }
 
-func (c *mysql) getLivenessProbe() *core.Probe {
-	return &core.Probe{
-		Handler: core.Handler{
-			Exec: &core.ExecAction{
+func (c *mysql) getLivenessProbe() *corev1.Probe {
+	return &corev1.Probe{
+		Handler: corev1.Handler{
+			Exec: &corev1.ExecAction{
 				Command: []string{"sh", "-c", "mysqladmin ping -uroot -p${MYSQL_ROOT_PASSWORD}"},
 			},
 		},
@@ -86,10 +87,10 @@ func (c *mysql) getLivenessProbe() *core.Probe {
 	}
 }
 
-func (c *mysql) getReadinessProbe() *core.Probe {
-	return &core.Probe{
-		Handler: core.Handler{
-			Exec: &core.ExecAction{
+func (c *mysql) getReadinessProbe() *corev1.Probe {
+	return &corev1.Probe{
+		Handler: corev1.Handler{
+			Exec: &corev1.ExecAction{
 				Command: []string{"sh", "-c", `mysql -uroot -p${MYSQL_ROOT_PASSWORD} -e "SELECT 1"`},
 			},
 		},
@@ -101,8 +102,8 @@ func (c *mysql) getReadinessProbe() *core.Probe {
 	}
 }
 
-func (c *mysql) getVolumeMounts() []core.VolumeMount {
-	return []core.VolumeMount{
+func (c *mysql) getVolumeMounts() []corev1.VolumeMount {
+	return []corev1.VolumeMount{
 		{
 			Name:      utils.ConfVolumeName,
 			MountPath: utils.ConfVolumeMountPath,

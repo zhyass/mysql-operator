@@ -20,9 +20,10 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/zhyass/mysql-operator/sidecar"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+
+	"github.com/zhyass/mysql-operator/sidecar"
 )
 
 const (

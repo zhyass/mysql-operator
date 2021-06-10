@@ -17,15 +17,15 @@ limitations under the License.
 package container
 
 import (
-	core "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 )
 
-func getEnvVarFromSecret(sctName, name, key string, opt bool) core.EnvVar {
-	return core.EnvVar{
+func getEnvVarFromSecret(sctName, name, key string, opt bool) corev1.EnvVar {
+	return corev1.EnvVar{
 		Name: name,
-		ValueFrom: &core.EnvVarSource{
-			SecretKeyRef: &core.SecretKeySelector{
-				LocalObjectReference: core.LocalObjectReference{
+		ValueFrom: &corev1.EnvVarSource{
+			SecretKeyRef: &corev1.SecretKeySelector{
+				LocalObjectReference: corev1.LocalObjectReference{
 					Name: sctName,
 				},
 				Key:      key,

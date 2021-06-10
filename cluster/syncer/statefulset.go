@@ -22,17 +22,18 @@ import (
 	"github.com/imdario/mergo"
 	"github.com/presslabs/controller-util/mergo/transformers"
 	"github.com/presslabs/controller-util/syncer"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	"github.com/zhyass/mysql-operator/cluster"
 	"github.com/zhyass/mysql-operator/cluster/container"
 	"github.com/zhyass/mysql-operator/utils"
-	apps "k8s.io/api/apps/v1"
-	core "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func NewStatefulSetSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface {
-	obj := &apps.StatefulSet{
+	obj := &appsv1.StatefulSet{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
 			Kind:       "StatefulSet",
@@ -80,14 +81,14 @@ func NewStatefulSetSyncer(cli client.Client, c *cluster.Cluster) syncer.Interfac
 	})
 }
 
-func ensurePodSpec(c *cluster.Cluster) core.PodSpec {
+func ensurePodSpec(c *cluster.Cluster) corev1.PodSpec {
 	initSidecar := container.EnsureContainer(utils.ContainerInitSidecarName, c)
 	initMysql := container.EnsureContainer(utils.ContainerInitMysqlName, c)
-	initContainers := []core.Container{initSidecar, initMysql}
+	initContainers := []corev1.Container{initSidecar, initMysql}
 
 	mysql := container.EnsureContainer(utils.ContainerMysqlName, c)
 	xenon := container.EnsureContainer(utils.ContainerXenonName, c)
-	containers := []core.Container{mysql, xenon}
+	containers := []corev1.Container{mysql, xenon}
 	if c.Spec.MetricsOpts.Enabled {
 		containers = append(containers, container.EnsureContainer(utils.ContainerMetricsName, c))
 	}
@@ -98,7 +99,7 @@ func ensurePodSpec(c *cluster.Cluster) core.PodSpec {
 		containers = append(containers, container.EnsureContainer(utils.ContainerAuditLogName, c))
 	}
 
-	return core.PodSpec{
+	return corev1.PodSpec{
 		InitContainers:     initContainers,
 		Containers:         containers,
 		Volumes:            c.EnsureVolumes(),

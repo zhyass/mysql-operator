@@ -17,9 +17,10 @@ limitations under the License.
 package container
 
 import (
+	corev1 "k8s.io/api/core/v1"
+
 	"github.com/zhyass/mysql-operator/cluster"
 	"github.com/zhyass/mysql-operator/utils"
-	core "k8s.io/api/core/v1"
 )
 
 type auditLog struct {
@@ -40,32 +41,32 @@ func (c *auditLog) getCommand() []string {
 	return []string{"tail", "-f", utils.LogsVolumeMountPath + "/mysql-audit.log"}
 }
 
-func (c *auditLog) getEnvVars() []core.EnvVar {
+func (c *auditLog) getEnvVars() []corev1.EnvVar {
 	return nil
 }
 
-func (c *auditLog) getLifecycle() *core.Lifecycle {
+func (c *auditLog) getLifecycle() *corev1.Lifecycle {
 	return nil
 }
 
-func (c *auditLog) getResources() core.ResourceRequirements {
+func (c *auditLog) getResources() corev1.ResourceRequirements {
 	return c.Spec.PodSpec.Resources
 }
 
-func (c *auditLog) getPorts() []core.ContainerPort {
+func (c *auditLog) getPorts() []corev1.ContainerPort {
 	return nil
 }
 
-func (c *auditLog) getLivenessProbe() *core.Probe {
+func (c *auditLog) getLivenessProbe() *corev1.Probe {
 	return nil
 }
 
-func (c *auditLog) getReadinessProbe() *core.Probe {
+func (c *auditLog) getReadinessProbe() *corev1.Probe {
 	return nil
 }
 
-func (c *auditLog) getVolumeMounts() []core.VolumeMount {
-	return []core.VolumeMount{
+func (c *auditLog) getVolumeMounts() []corev1.VolumeMount {
+	return []corev1.VolumeMount{
 		{
 			Name:      utils.LogsVolumeName,
 			MountPath: utils.LogsVolumeMountPath,

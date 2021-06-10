@@ -31,7 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	mysqlv1 "github.com/zhyass/mysql-operator/api/v1"
+	apiv1 "github.com/zhyass/mysql-operator/api/v1"
 	"github.com/zhyass/mysql-operator/controllers"
 	// +kubebuilder:scaffold:imports
 )
@@ -44,7 +44,7 @@ var (
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
-	utilruntime.Must(mysqlv1.AddToScheme(scheme))
+	utilruntime.Must(apiv1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 

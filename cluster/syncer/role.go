@@ -18,11 +18,12 @@ package syncer
 
 import (
 	"github.com/presslabs/controller-util/syncer"
-	"github.com/zhyass/mysql-operator/cluster"
-	"github.com/zhyass/mysql-operator/utils"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/zhyass/mysql-operator/cluster"
+	"github.com/zhyass/mysql-operator/utils"
 )
 
 func NewRoleSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface {

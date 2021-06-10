@@ -17,9 +17,10 @@ limitations under the License.
 package container
 
 import (
+	corev1 "k8s.io/api/core/v1"
+
 	"github.com/zhyass/mysql-operator/cluster"
 	"github.com/zhyass/mysql-operator/utils"
-	core "k8s.io/api/core/v1"
 )
 
 type slowLog struct {
@@ -40,32 +41,32 @@ func (c *slowLog) getCommand() []string {
 	return []string{"tail", "-f", utils.LogsVolumeMountPath + "/mysql-slow.log"}
 }
 
-func (c *slowLog) getEnvVars() []core.EnvVar {
+func (c *slowLog) getEnvVars() []corev1.EnvVar {
 	return nil
 }
 
-func (c *slowLog) getLifecycle() *core.Lifecycle {
+func (c *slowLog) getLifecycle() *corev1.Lifecycle {
 	return nil
 }
 
-func (c *slowLog) getResources() core.ResourceRequirements {
+func (c *slowLog) getResources() corev1.ResourceRequirements {
 	return c.Spec.PodSpec.Resources
 }
 
-func (c *slowLog) getPorts() []core.ContainerPort {
+func (c *slowLog) getPorts() []corev1.ContainerPort {
 	return nil
 }
 
-func (c *slowLog) getLivenessProbe() *core.Probe {
+func (c *slowLog) getLivenessProbe() *corev1.Probe {
 	return nil
 }
 
-func (c *slowLog) getReadinessProbe() *core.Probe {
+func (c *slowLog) getReadinessProbe() *corev1.Probe {
 	return nil
 }
 
-func (c *slowLog) getVolumeMounts() []core.VolumeMount {
-	return []core.VolumeMount{
+func (c *slowLog) getVolumeMounts() []corev1.VolumeMount {
+	return []corev1.VolumeMount{
 		{
 			Name:      utils.LogsVolumeName,
 			MountPath: utils.LogsVolumeMountPath,
