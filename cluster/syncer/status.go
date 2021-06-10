@@ -90,13 +90,13 @@ func (s *StatusUpdater) Sync(ctx context.Context) (syncer.SyncResult, error) {
 	}
 
 	// get ready nodes.
-	var readyNodes []*core.Pod
+	var readyNodes []core.Pod
 	for _, pod := range list.Items {
 		for _, cond := range pod.Status.Conditions {
 			switch cond.Type {
 			case core.ContainersReady:
 				if cond.Status == core.ConditionTrue {
-					readyNodes = append(readyNodes, &pod)
+					readyNodes = append(readyNodes, pod)
 				}
 			case core.PodScheduled:
 				if cond.Reason == core.PodReasonUnschedulable {
@@ -135,7 +135,7 @@ func (s *StatusUpdater) Sync(ctx context.Context) (syncer.SyncResult, error) {
 	return syncer.SyncResult{}, s.updateNodeStatus(ctx, s.cli, readyNodes)
 }
 
-func (s *StatusUpdater) updateNodeStatus(ctx context.Context, cli client.Client, pods []*core.Pod) error {
+func (s *StatusUpdater) updateNodeStatus(ctx context.Context, cli client.Client, pods []core.Pod) error {
 	sctName := s.GetNameForResource(utils.Secret)
 	svcName := s.GetNameForResource(utils.HeadlessSVC)
 	port := utils.MysqlPort
@@ -149,7 +149,7 @@ func (s *StatusUpdater) updateNodeStatus(ctx context.Context, cli client.Client,
 		},
 		secret,
 	); err != nil {
-		s.log.V(1).Info("secret '%s' not found", sctName)
+		s.log.V(1).Info("secret not found", "name", sctName)
 		return nil
 	}
 	user, ok := secret.Data["metrics-user"]
@@ -162,12 +162,13 @@ func (s *StatusUpdater) updateNodeStatus(ctx context.Context, cli client.Client,
 	}
 
 	for _, pod := range pods {
-		host := fmt.Sprintf("%s.%s.%s", pod.Name, svcName, nameSpace)
+		podName := pod.Name
+		host := fmt.Sprintf("%s.%s.%s", podName, svcName, nameSpace)
 		index := s.getNodeStatusIndex(host)
 		node := &s.Status.Nodes[index]
 		node.Message = ""
 
-		isLeader, err := checkRole(pod)
+		isLeader, err := checkRole(nameSpace, podName)
 		if err != nil {
 			s.log.Error(err, "failed to check the node role", "node", node.Name)
 			node.Message = err.Error()
@@ -199,7 +200,7 @@ func (s *StatusUpdater) updateNodeStatus(ctx context.Context, cli client.Client,
 
 		if isLeader == core.ConditionTrue && isReadOnly != core.ConditionFalse {
 			s.log.V(1).Info("try to correct the leader writeable", "node", node.Name)
-			correctLeaderReadOnly(pod)
+			correctLeaderReadOnly(nameSpace, podName)
 		}
 
 		// update mysqlv1.NodeConditionLagged.
@@ -209,8 +210,8 @@ func (s *StatusUpdater) updateNodeStatus(ctx context.Context, cli client.Client,
 		// update mysqlv1.NodeConditionReadOnly.
 		s.updateNodeCondition(node, 2, isReadOnly)
 
-		if err = setPodHealthy(ctx, cli, pod, node); err != nil {
-			s.log.Error(err, "cannot update pod", "name", pod.Name, "namespace", pod.Namespace)
+		if err = setPodHealthy(ctx, cli, &pod, node); err != nil {
+			s.log.Error(err, "cannot update pod", "name", podName, "namespace", pod.Namespace)
 		}
 	}
 
@@ -265,7 +266,7 @@ func (s *StatusUpdater) updateNodeCondition(node *mysqlv1.NodeStatus, idx int, s
 	}
 }
 
-func checkRole(pod *core.Pod) (core.ConditionStatus, error) {
+func checkRole(namespace, podName string) (core.ConditionStatus, error) {
 	command := []string{"xenoncli", "raft", "status"}
 	status := core.ConditionUnknown
 	executor, err := internal.NewPodExecutor()
@@ -273,7 +274,7 @@ func checkRole(pod *core.Pod) (core.ConditionStatus, error) {
 		return status, err
 	}
 
-	stdout, stderr, err := executor.Exec(pod, "xenon", command...)
+	stdout, stderr, err := executor.Exec(namespace, podName, "xenon", command...)
 	if err != nil {
 		return status, err
 	}
@@ -298,31 +299,31 @@ func checkRole(pod *core.Pod) (core.ConditionStatus, error) {
 	return status, nil
 }
 
-func correctLeaderReadOnly(pod *core.Pod) error {
+func correctLeaderReadOnly(namespace, podName string) error {
 	executor, err := internal.NewPodExecutor()
 	if err != nil {
 		return err
 	}
 
-	err = executor.SetGlobalSysVar(pod, "SET GLOBAL read_only=off")
+	err = executor.SetGlobalSysVar(namespace, podName, "SET GLOBAL read_only=off")
 	if err != nil {
 		return err
 	}
 
-	return executor.SetGlobalSysVar(pod, "SET GLOBAL super_read_only=off")
+	return executor.SetGlobalSysVar(namespace, podName, "SET GLOBAL super_read_only=off")
 }
 
 func setPodHealthy(ctx context.Context, cli client.Client, pod *core.Pod, node *mysqlv1.NodeStatus) error {
-	healthy := "false"
+	healthy := "no"
 	if node.Conditions[0].Status == core.ConditionFalse {
 		if node.Conditions[1].Status == core.ConditionFalse &&
 			node.Conditions[2].Status == core.ConditionTrue &&
 			node.Conditions[3].Status == core.ConditionTrue {
-			healthy = "true"
+			healthy = "yes"
 		} else if node.Conditions[1].Status == core.ConditionTrue &&
 			node.Conditions[2].Status == core.ConditionFalse &&
 			node.Conditions[3].Status == core.ConditionFalse {
-			healthy = "true"
+			healthy = "yes"
 		}
 	}
 

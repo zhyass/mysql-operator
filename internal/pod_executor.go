@@ -60,12 +60,12 @@ func NewPodExecutor() (*PodExecutor, error) {
 	}, nil
 }
 
-func (p *PodExecutor) Exec(pod *corev1.Pod, containerName string, command ...string) ([]byte, []byte, error) {
+func (p *PodExecutor) Exec(namespace, podName, containerName string, command ...string) ([]byte, []byte, error) {
 	request := p.client.RESTClient().
 		Post().
 		Resource("pods").
-		Namespace(pod.Namespace).
-		Name(pod.Name).
+		Namespace(namespace).
+		Name(podName).
 		SubResource("exec").
 		VersionedParams(&corev1.PodExecOptions{
 			Container: containerName,
@@ -93,9 +93,9 @@ func (p *PodExecutor) Exec(pod *corev1.Pod, containerName string, command ...str
 	return stdOut.Bytes(), stdErr.Bytes(), err
 }
 
-func (p *PodExecutor) SetGlobalSysVar(pod *corev1.Pod, query string) error {
+func (p *PodExecutor) SetGlobalSysVar(namespace, podName string, query string) error {
 	cmd := []string{"xenoncli", "mysql", "sysvar", query}
-	_, stderr, err := p.Exec(pod, "xenon", cmd...)
+	_, stderr, err := p.Exec(namespace, podName, "xenon", cmd...)
 	if err != nil {
 		return err
 	}

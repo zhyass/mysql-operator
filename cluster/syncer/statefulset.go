@@ -52,6 +52,9 @@ func NewStatefulSetSyncer(cli client.Client, c *cluster.Cluster) syncer.Interfac
 		for k, v := range c.Spec.PodSpec.Labels {
 			obj.Spec.Template.ObjectMeta.Labels[k] = v
 		}
+		obj.Spec.Template.ObjectMeta.Labels["role"] = "candidate"
+		obj.Spec.Template.ObjectMeta.Labels["healthy"] = "no"
+
 		obj.Spec.Template.Annotations = c.Spec.PodSpec.Annotations
 		if len(obj.Spec.Template.ObjectMeta.Annotations) == 0 {
 			obj.Spec.Template.ObjectMeta.Annotations = make(map[string]string)
