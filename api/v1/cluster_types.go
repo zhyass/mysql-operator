@@ -233,7 +233,6 @@ type ClusterCondition struct {
 // NodeStatus defines type for status of a node into cluster.
 type NodeStatus struct {
 	Name       string          `json:"name"`
-	Healthy    bool            `json:"healthy"`
 	Message    string          `json:"message,omitempty"`
 	Conditions []NodeCondition `json:"conditions,omitempty"`
 }

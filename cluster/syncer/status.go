@@ -132,10 +132,10 @@ func (s *StatusUpdater) Sync(ctx context.Context) (syncer.SyncResult, error) {
 	}
 
 	// update ready nodes' status.
-	return syncer.SyncResult{}, s.updateNodeStatus(s.cli, readyNodes)
+	return syncer.SyncResult{}, s.updateNodeStatus(ctx, s.cli, readyNodes)
 }
 
-func (s *StatusUpdater) updateNodeStatus(cli client.Client, pods []*core.Pod) error {
+func (s *StatusUpdater) updateNodeStatus(ctx context.Context, cli client.Client, pods []*core.Pod) error {
 	sctName := s.GetNameForResource(utils.Secret)
 	svcName := s.GetNameForResource(utils.HeadlessSVC)
 	port := utils.MysqlPort
@@ -166,7 +166,6 @@ func (s *StatusUpdater) updateNodeStatus(cli client.Client, pods []*core.Pod) er
 		index := s.getNodeStatusIndex(host)
 		node := &s.Status.Nodes[index]
 		node.Message = ""
-		node.Healthy = false
 
 		isLeader, err := checkRole(pod)
 		if err != nil {
@@ -210,7 +209,9 @@ func (s *StatusUpdater) updateNodeStatus(cli client.Client, pods []*core.Pod) er
 		// update mysqlv1.NodeConditionReadOnly.
 		s.updateNodeCondition(node, 2, isReadOnly)
 
-		setNodeStatusHealthy(node)
+		if err = setPodHealthy(ctx, cli, pod, node); err != nil {
+			s.log.Error(err, "cannot update pod", "name", pod.Name, "namespace", pod.Namespace)
+		}
 	}
 
 	return nil
@@ -226,8 +227,7 @@ func (s *StatusUpdater) getNodeStatusIndex(name string) int {
 
 	lastTransitionTime := metav1.NewTime(time.Now())
 	status := mysqlv1.NodeStatus{
-		Name:    name,
-		Healthy: false,
+		Name: name,
 		Conditions: []mysqlv1.NodeCondition{
 			{
 				Type:               mysqlv1.NodeConditionLagged,
@@ -312,16 +312,25 @@ func correctLeaderReadOnly(pod *core.Pod) error {
 	return executor.SetGlobalSysVar(pod, "SET GLOBAL super_read_only=off")
 }
 
-func setNodeStatusHealthy(node *mysqlv1.NodeStatus) {
+func setPodHealthy(ctx context.Context, cli client.Client, pod *core.Pod, node *mysqlv1.NodeStatus) error {
+	healthy := "false"
 	if node.Conditions[0].Status == core.ConditionFalse {
 		if node.Conditions[1].Status == core.ConditionFalse &&
 			node.Conditions[2].Status == core.ConditionTrue &&
 			node.Conditions[3].Status == core.ConditionTrue {
-			node.Healthy = true
+			healthy = "true"
 		} else if node.Conditions[1].Status == core.ConditionTrue &&
 			node.Conditions[2].Status == core.ConditionFalse &&
 			node.Conditions[3].Status == core.ConditionFalse {
-			node.Healthy = true
+			healthy = "true"
 		}
 	}
+
+	if pod.Labels["healthy"] != healthy {
+		pod.Labels["healthy"] = healthy
+		if err := cli.Update(ctx, pod); client.IgnoreNotFound(err) != nil {
+			return err
+		}
+	}
+	return nil
 }
