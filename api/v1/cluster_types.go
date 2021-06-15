@@ -59,7 +59,7 @@ type ClusterSpec struct {
 
 	// Pod extra specification
 	// +optional
-	// +kubebuilder:default:={imagePullPolicy: "IfNotPresent", serviceAccountName: "mysql", resources: {requests: {cpu: "10m", memory: "32Mi"}}, sidecarImage: "zhyass/sidecar:0.1", busyboxImage: "busybox:1.32"}
+	// +kubebuilder:default:={imagePullPolicy: "IfNotPresent", resources: {requests: {cpu: "10m", memory: "32Mi"}}, sidecarImage: "zhyass/sidecar:0.1", busyboxImage: "busybox:1.32"}
 	PodSpec PodSpec `json:"podSpec,omitempty"`
 
 	// PVC extra specifiaction
@@ -156,12 +156,6 @@ type PodSpec struct {
 	PriorityClassName string              `json:"priorityClassName,omitempty"`
 	Tolerations       []corev1.Toleration `json:"tolerations,omitempty"`
 	SchedulerName     string              `json:"schedulerName,omitempty"`
-
-	// +optional
-	// +kubebuilder:validation:MinLength=1
-	// +kubebuilder:validation:MaxLength=63
-	// +kubebuilder:default:="mysql"
-	ServiceAccountName string `json:"serviceAccountName,omitempty"`
 
 	// +optional
 	// +kubebuilder:default:={requests: {cpu: "10m", memory: "32Mi"}}

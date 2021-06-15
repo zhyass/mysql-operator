@@ -23,6 +23,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/zhyass/mysql-operator/cluster"
+	"github.com/zhyass/mysql-operator/utils"
 )
 
 func NewServiceAccountSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface {
@@ -32,7 +33,7 @@ func NewServiceAccountSyncer(cli client.Client, c *cluster.Cluster) syncer.Inter
 			Kind:       "ServiceAccount",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      c.Spec.PodSpec.ServiceAccountName,
+			Name:      c.GetNameForResource(utils.ServiceAccount),
 			Namespace: c.Namespace,
 			Labels:    c.GetLabels(),
 		},

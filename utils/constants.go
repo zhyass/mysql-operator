@@ -80,20 +80,22 @@ const (
 type ResourceName string
 
 const (
-	// HeadlessSVC is the alias of the headless service resource
+	// HeadlessSVC is the alias of the headless service resource.
 	HeadlessSVC ResourceName = "headless"
-	// StatefulSet is the alias of the statefulset resource
+	// StatefulSet is the alias of the statefulset resource.
 	StatefulSet ResourceName = "mysql"
-	// ConfigMap is the alias for mysql configs, the config map resource
+	// ConfigMap is the alias for mysql configs, the config map resource.
 	ConfigMap ResourceName = "config-files"
-	// LeaderService is the name of the service that points to leader node
+	// LeaderService is the name of the service that points to leader node.
 	LeaderService ResourceName = "leader-service"
-	// FollowerService is the name of a service that points healthy followers (excludes leader)
+	// FollowerService is the name of a service that points healthy followers (excludes leader).
 	FollowerService ResourceName = "follower-service"
-	// Secret is the name of the "private" secret that contains operator related credentials
+	// Secret is the name of the secret that contains operator related credentials.
 	Secret ResourceName = "secret"
-
+	// Role is the alias of the role resource.
 	Role ResourceName = "role"
-
+	// RoleBinding is the alias of the rolebinding resource.
 	RoleBinding ResourceName = "rolebinding"
+	// ServiceAccount is the alias of the serviceaccount resource.
+	ServiceAccount ResourceName = "service-account"
 )

@@ -56,8 +56,6 @@ spec:
     slowLogTail: false
     auditLogTail: false
 
-    serviceAccountName: mysql
-
     labels: {}
     annotations: {}
     affinity: {}

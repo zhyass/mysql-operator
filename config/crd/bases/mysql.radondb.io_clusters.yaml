@@ -226,7 +226,6 @@ spec:
                     requests:
                       cpu: 10m
                       memory: 32Mi
-                  serviceAccountName: mysql
                   sidecarImage: zhyass/sidecar:0.1
                 description: Pod extra specification
                 properties:
@@ -904,11 +903,6 @@ spec:
                         type: object
                     type: object
                   schedulerName:
-                    type: string
-                  serviceAccountName:
-                    default: mysql
-                    maxLength: 63
-                    minLength: 1
                     type: string
                   sidecarImage:
                     default: zhyass/sidecar:0.1

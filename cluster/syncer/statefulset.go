@@ -104,7 +104,7 @@ func ensurePodSpec(c *cluster.Cluster) corev1.PodSpec {
 		Containers:         containers,
 		Volumes:            c.EnsureVolumes(),
 		SchedulerName:      c.Spec.PodSpec.SchedulerName,
-		ServiceAccountName: c.Spec.PodSpec.ServiceAccountName,
+		ServiceAccountName: c.GetNameForResource(utils.ServiceAccount),
 		Affinity:           c.Spec.PodSpec.Affinity,
 		PriorityClassName:  c.Spec.PodSpec.PriorityClassName,
 		Tolerations:        c.Spec.PodSpec.Tolerations,

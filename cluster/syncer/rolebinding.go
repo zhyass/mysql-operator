@@ -47,7 +47,7 @@ func NewRoleBindingSyncer(cli client.Client, c *cluster.Cluster) syncer.Interfac
 		roleBinding.Subjects = []rbacv1.Subject{
 			{
 				Kind: "ServiceAccount",
-				Name: c.Spec.PodSpec.ServiceAccountName,
+				Name: c.GetNameForResource(utils.ServiceAccount),
 			},
 		}
 		return nil
