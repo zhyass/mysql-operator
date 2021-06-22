@@ -1,4 +1,6 @@
-# mysql-operator
+# mysql-operator has moved
+
+Get the new repository: https://github.com/zhyass/radondb-mysql-kubernetes
 
 ## Quickstart
 
