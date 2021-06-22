@@ -2,14 +2,15 @@
 #  Build Xenon
 ###############################################################################
 
-FROM golang:1.15 as builder
+FROM golang:1.16 as builder
 
 ARG XENON_BRANCH=feature_adapt_k8s
 RUN set -ex; \
-    mkdir -p /go/src/github.com/radondb; \
-    cd /go/src/github.com/radondb; \
-    git clone --branch $XENON_BRANCH https://github.com/radondb/xenon.git; \
+    mkdir -p /go/src/github.com/zhyass; \
+    cd /go/src/github.com/zhyass; \
+    git clone --branch $XENON_BRANCH https://github.com/zhyass/xenon.git; \
     cd xenon; \
+    go env -w GO111MODULE=off; \
     make build
 
 ###############################################################################
@@ -27,8 +28,8 @@ RUN set -ex \
     # allow to change config files
     && chown -R 1001:1001 /etc/xenon /var/lib/xenon
 
-COPY --from=builder /go/src/github.com/radondb/xenon/bin/xenon /usr/local/bin/xenon
-COPY --from=builder /go/src/github.com/radondb/xenon/bin/xenoncli /usr/local/bin/xenoncli
+COPY --from=builder /go/src/github.com/zhyass/xenon/bin/xenon /usr/local/bin/xenon
+COPY --from=builder /go/src/github.com/zhyass/xenon/bin/xenoncli /usr/local/bin/xenoncli
 
 USER 1001
 WORKDIR /
